@@ -1,0 +1,19 @@
+PATRIMÔNIO — SEU APLICATIVO DE INVESTIMENTOS
+
+1. Extraia o ZIP e abra a pasta patrimonio no Codex ou VS Code.
+2. Leia README.md: contém os passos para executar e publicar na Vercel.
+3. Com Node.js instalado, execute na pasta:
+   npm ci
+   npm run dev
+4. A carteira funciona em modo local sem cadastrar chaves.
+5. Para sincronizar os aparelhos: configure Supabase conforme o README.
+6. Para a análise mensal: configure BRAPI_TOKEN e o agendamento.
+
+Não precisa reenviar a conversa. Todo o código está neste pacote.
+Nenhuma senha bancária é necessária.
+
+Leia METODOLOGIA.md antes de usar a triagem de ações.
+A análise mostra até cinco candidatas para estudo; não executa compras.
+
+Validação: 17 testes passaram, build e rotas conferidos.
+Prévia visual e integrações autenticadas ainda precisam de teste no ambiente publicado.
