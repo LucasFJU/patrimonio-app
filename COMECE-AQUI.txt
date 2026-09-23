@@ -1,3 +1,5 @@
+VERSÃO 2: leia ATUALIZACAO-V2.md antes de atualizar. Não execute novamente o SQL em um banco já existente.
+
 PATRIMÔNIO — SEU APLICATIVO DE INVESTIMENTOS
 
 1. Extraia o ZIP e abra a pasta patrimonio no Codex ou VS Code.

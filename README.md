@@ -1,3 +1,7 @@
+# Versão 2 — Patrimônio Familiar
+
+Leia primeiro [ATUALIZACAO-V2.md](ATUALIZACAO-V2.md) para atualizar o site existente, configurar a senha da conta e conhecer os novos recursos e limites. O guia abaixo documenta a base original; as diferenças da V2 estão no guia de atualização.
+
 # Patrimônio
 
 Aplicação web em português para acompanhar investimentos no computador e no celular, com publicação na Vercel. Código editável em Next.js + React. Não é um programa Windows nem um aplicativo de loja: abre no navegador e inclui um manifesto para instalação como aplicativo web quando o navegador permitir.
@@ -49,7 +53,7 @@ O projeto já contém a integração; nenhuma conta externa foi criada ou config
 
 1. Crie um projeto Supabase dedicado ao aplicativo.
 2. No SQL Editor, execute o conteúdo de `supabase/setup.sql` **uma vez**, em um projeto novo. O script cria as tabelas, permissões e regras de acesso. Não execute novamente sobre tabelas existentes sem revisar a migração.
-3. Em Authentication, habilite autenticação por e-mail. Cadastre seu usuário por **Add user / Create user** e confirme o e-mail. Desabilite novos cadastros públicos. O app usa `shouldCreateUser: false`, aceitando apenas contas já cadastradas.
+3. Em Authentication, habilite autenticação por e-mail. Cadastre seu usuário por **Add user / Create user** e confirme o e-mail. Desabilite novos cadastros públicos. O app não oferece cadastro público: entre com a conta previamente criada e sua senha.
 4. Configure envio de e-mail/SMTP para seu endereço. O serviço padrão pode restringir destinatários; teste o recebimento antes de depender dele.
 5. Em Authentication → URL Configuration, configure **Site URL** com a URL definitiva da Vercel e adicione a mesma origem às URLs de redirecionamento permitidas. Para desenvolvimento, adicione também a origem local efetivamente utilizada. Evite liberar URLs genéricas desnecessárias.
 6. Cadastre as variáveis abaixo na Vercel. Para uso local conectado, copie `.env.example` para `.env.local` e preencha no seu computador. Nunca envie esse arquivo ao GitHub.
@@ -71,9 +75,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 Não coloque `NEXT_PUBLIC_` nas chaves secretas. As duas variáveis públicas são incorporadas ao aplicativo no build; faça um novo deploy sempre que as alterar.
 
-7. Entre no app com seu e-mail e abra o link recebido. Faça um primeiro lançamento ou salve suas metas para gravar a carteira.
+7. Entre no app com e-mail e senha; se necessário, use a recuperação de senha para defini-la. Faça um primeiro lançamento ou salve suas metas para gravar a carteira.
 8. Se já usou o modo local, **baixe o backup antes de ativar a conta**. Depois do login, restaure-o em Configurações. Não há migração silenciosa: restaurar substitui a carteira da conta, mediante confirmação.
-9. Abra a mesma URL e conta no outro dispositivo. As gravações são compartilhadas, mas a tela não recebe mudanças em tempo real. Recarregue para ver alterações do outro aparelho. Se os dois editarem simultaneamente, o app recusa uma gravação sobre versão antiga.
+9. Abra a mesma URL e conta no outro dispositivo. As gravações são compartilhadas. Visão geral, Evolução mensal e Dividendos consultam mudanças a cada 15 segundos; outras telas recebem os dados ao retornar à Visão geral ou recarregar. Se os dois editarem simultaneamente, o app recusa uma gravação sobre versão antiga.
 
 A política de acesso do banco limita a leitura e alteração da carteira ao próprio usuário autenticado. As análises de empresas não contêm sua carteira e são compartilhadas entre usuários cadastrados desse projeto.
 
@@ -103,7 +107,7 @@ Leia `METODOLOGIA.md`: a seleção é uma triagem quantitativa, não uma anális
 | Investimento subiu ou caiu de valor | Atualização de saldo conforme o extrato |
 | Quer fechar o mês | Registre movimentações primeiro e depois os saldos de cada posição na data do extrato |
 
-Os saldos são em reais, não em quantidade de ações. Esta versão não calcula preço médio fiscal, imposto de renda, DARF, lotes ou rentabilidade percentual ponderada por fluxo. Use as notas de corretagem e extratos para essas finalidades. Custos e impostos pagos devem estar refletidos nos saldos líquidos informados. Em títulos com tributos diferidos, use a mesma convenção de saldo bruto ou líquido em todos os meses e anote qual escolheu.
+Os saldos continuam registrados em reais. A V2 acrescenta quantidade e preço médio informados, sem substituir o controle de saldo. Esta versão não calcula preço médio fiscal, imposto de renda, DARF, lotes ou rentabilidade percentual ponderada por fluxo. Use as notas de corretagem e extratos para essas finalidades. Custos e impostos pagos devem estar refletidos nos saldos líquidos informados. Em títulos com tributos diferidos, use a mesma convenção de saldo bruto ou líquido em todos os meses e anote qual escolheu.
 
 **Resultado registrado = patrimônio atual − saldo inicial − aportes + retiradas.** Dividendos mantidos na carteira já compõem esse resultado; reinvestimento não o aumenta novamente. Sem atualizar saldos, o resultado não acompanha a valorização de mercado.
 
