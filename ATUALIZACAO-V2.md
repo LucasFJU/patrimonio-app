@@ -1,4 +1,4 @@
-> **FIIs:** cadastro, posição, atualização de saldo e dividendos permanecem na carteira. A análise de mercado e a integração com BRAPI/CVM foram retiradas nesta versão.
+> **FIIs:** cadastro, posição, atualização de saldo e dividendos permanecem na carteira; a análise de FIIs foi pausada. A análise mensal de ações usa BolsAI.
 
 # Patrimônio Familiar — atualização V2
 
@@ -32,7 +32,7 @@ Atualização feita sobre o repositório LucasFJU/patrimonio-app. Não substitui
 
 - Quantidade e preço médio são campos informados da posição atual, não um livro fiscal de compras e vendas. Não atualizam saldos automaticamente nem calculam impostos. Aportes, transferências e atualização de saldo continuam nos lançamentos para evitar duplicação de capital.
 - Análise mensal de FIIs e cotações integradas estão pausadas. Cadastre cada fundo na carteira e registre os dividendos e saldos manualmente.
-- A integração de ações existente usa BRAPI. Não foi trocada por BolsAI: o projeto não contém contrato de API nem credenciais dessa fonte. Nenhuma nota ou recomendação fictícia foi adicionada.
+- A análise mensal de ações usa BolsAI. O plano Free informa 200 chamadas por dia e inclui fundamentos e preços atuais; cada rodada usa cerca de 30 chamadas. Histórico detalhado ou indicadores indisponíveis não são inventados.
 - A preferência de tema pertence a cada aparelho. A carteira, metas e diário compartilham o mesmo registro privado da conta.
 - Evite usar versões antigas do aplicativo depois de cadastrar FIIs: os validadores antigos não conhecem as novas classes. Para voltar à V1, restaure o backup anterior à atualização.
 

@@ -9,7 +9,7 @@ PATRIMÔNIO — SEU APLICATIVO DE INVESTIMENTOS
    npm run dev
 4. A carteira funciona em modo local sem cadastrar chaves.
 5. Para sincronizar os aparelhos: configure Supabase conforme o README.
-6. Para a análise mensal: configure BRAPI_TOKEN e o agendamento.
+6. Para a análise mensal: configure BOLSAI_API_KEY e SUPABASE_SERVICE_ROLE_KEY na Vercel, além do agendamento.
 
 Não precisa reenviar a conversa. Todo o código está neste pacote.
 Nenhuma senha bancária é necessária.
