@@ -12,13 +12,17 @@ Aplicação web em português para acompanhar investimentos no computador e no c
 - Cadastro de CDB, Tesouro Direto, ações e investimento internacional.
 - Registro de aportes, retiradas, dividendos/JCP líquidos, reinvestimentos, transferências internas e saldos.
 - Evolução mensal separando capital novo de resultado financeiro, sem criar rentabilidade fictícia.
+- Visão familiar consolidada com investimentos, saldos de contas e faturas em aberto; inclui histórico mensal do patrimônio líquido.
+- Controle de receitas, despesas, transferências próprias, categorias e orçamentos mensais, lançamentos recorrentes, cartões, parcelas e vencimentos.
+- Importação de extrato CSV com prévia, validação e detecção de duplicados, mais exportação do controle financeiro. Linhas com possíveis transferências ou pagamentos de fatura exigem lançamento manual para evitar dupla contagem.
+- Retorno pessoal ponderado pelas datas dos aportes e retiradas, além de comparação com CDI e IPCA (Banco Central/SGS) e Ibovespa (estatísticas públicas da B3). O período começa no histórico disponível; valores anteriores ao início do app não são inventados.
 - Metas de reserva, divisão do aporte e simulador de longo prazo.
 - Exportação CSV, backup JSON e restauração com validação.
 - Acesso por e-mail e sincronização privada entre dispositivos após conectar o Supabase.
 - Integração com a API BolsAI para fundamentos atuais, triagem mensal de até 15 ações, destaque para as cinco maiores notas, motivos de exclusão e arquivo de edições anteriores.
 - Agendamento na Vercel: verifica diariamente se falta a edição mensal ou se ela ficou incompleta. Limite de uma consulta completa por dia, inclusive pelo botão manual.
 
-As compras continuam sendo realizadas por você no Santander. O aplicativo não acessa sua conta bancária, não recebe senha do Santander e não executa ordens.
+As compras continuam sendo realizadas por você no Santander. Não existe conexão bancária automática gratuita configurada: os dados entram por lançamento manual ou importação CSV no próprio navegador. O aplicativo não acessa sua conta bancária, não recebe senha do Santander e não executa ordens.
 
 ## Comece em seu computador
 
@@ -104,6 +108,11 @@ Leia `METODOLOGIA.md`: a seleção é uma triagem quantitativa, não uma anális
 | Usou esses R$ 20 para comprar | Reinvestimento no destino; sai do caixa sem contar outro aporte |
 | Realocou parte do CDB para Tesouro | Transferência interna; cadastre primeiro o ativo de destino |
 | Retirou dinheiro para fora da carteira | Retirada |
+| Recebeu salário, pagou uma conta ou fez uma transferência entre contas próprias | Use **Controle financeiro**; transferência não é receita ou despesa |
+| Pagou uma fatura | Registre o pagamento na fatura e conta corretas; compras já registradas não serão lançadas de novo como despesa |
+| Comprou no cartão | Registre a compra, categoria, fechamento e parcelas; ela entra no orçamento na data da compra e as parcelas aparecem nas faturas |
+| Aplicou dinheiro da conta em um investimento | Em **Controle financeiro → Novo lançamento → Aporte em investimento**; o saldo da conta diminui e o aporte é vinculado à posição |
+| Importou um extrato Santander | Selecione o CSV, confira linhas e duplicados, escolha uma conta e importe apenas o que foi reconhecido |
 | Investimento subiu ou caiu de valor | Atualização de saldo conforme o extrato |
 | Quer fechar o mês | Registre movimentações primeiro e depois os saldos de cada posição na data do extrato |
 
@@ -121,7 +130,7 @@ npm run build
 npm start
 ```
 
-- 17 testes automatizados: cálculos, reinvestimento, retiradas, transferências, validação de backup, plano, projeção, critérios de seleção, falta de dados, limite da fonte e acesso às rotas.
+- Testes automatizados: cálculos da carteira e do retorno pessoal; transferências, faturas, parcelas, recorrências, CSV e duplicados; validação de backup; comparação de índices; critérios de seleção; falta de dados; limites da fonte e acesso às rotas.
 - Build de produção concluído com sucesso. Servidor de produção respondeu HTTP 200 para a página, manifesto e ícone; o cron sem segredo respondeu 401 e a análise não configurada respondeu 503, conforme esperado.
 - Prévia visual indisponível no ambiente da entrega: navegação, layout real em dispositivos e fluxo completo de login ainda precisam ser conferidos após a publicação.
 - Conexão real com Supabase, envio de e-mail, permissões aplicadas no banco e execução do cron ainda precisam ser validados no seu projeto configurado.
