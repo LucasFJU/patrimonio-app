@@ -12,8 +12,8 @@ Aplicação web em português para acompanhar investimentos no computador e no c
 - Cadastro de CDB, Tesouro Direto, ações e investimento internacional.
 - Registro de aportes, retiradas, dividendos/JCP líquidos, reinvestimentos, transferências internas e saldos.
 - Evolução mensal separando capital novo de resultado financeiro, sem criar rentabilidade fictícia.
-- Visão familiar consolidada com investimentos, saldos de contas e faturas em aberto; inclui histórico mensal do patrimônio líquido.
-- Controle de receitas, despesas, transferências próprias, categorias e orçamentos mensais, lançamentos recorrentes, cartões, parcelas e vencimentos.
+- Patrimônio, metas e histórico representam os ativos registrados na carteira; receitas e saldo bancário ficam separados no controle financeiro e só entram na carteira quando registrados como aporte.
+- Controle financeiro organizado por competência mensal: visão geral, lançamentos com filtros, orçamento, cartões e faturas, contas e importação CSV.
 - Importação de extrato CSV com prévia, validação e detecção de duplicados, mais exportação do controle financeiro. Linhas com possíveis transferências ou pagamentos de fatura exigem lançamento manual para evitar dupla contagem.
 - Retorno pessoal ponderado pelas datas dos aportes e retiradas, além de comparação com CDI e IPCA (Banco Central/SGS) e Ibovespa (estatísticas públicas da B3). O período começa no histórico disponível; valores anteriores ao início do app não são inventados.
 - Metas de reserva, divisão do aporte e simulador de longo prazo.
@@ -22,7 +22,7 @@ Aplicação web em português para acompanhar investimentos no computador e no c
 - Integração com a API BolsAI para fundamentos atuais, triagem mensal de até 15 ações, destaque para as cinco maiores notas, motivos de exclusão e arquivo de edições anteriores.
 - Agendamento na Vercel: verifica diariamente se falta a edição mensal ou se ela ficou incompleta. Limite de uma consulta completa por dia, inclusive pelo botão manual.
 
-As compras continuam sendo realizadas por você no Santander. Não existe conexão bancária automática gratuita configurada: os dados entram por lançamento manual ou importação CSV no próprio navegador. O aplicativo não acessa sua conta bancária, não recebe senha do Santander e não executa ordens.
+As compras continuam sendo realizadas por você no Santander. O Meu Pluggy oferece acesso gratuito aos próprios dados com sincronização diária e cobertura Santander via Open Finance. O app já possui integração de leitura: associe o item à aplicação demo, configure as credenciais privadas no servidor e informe o Item ID na aba Importação. CSV e lançamentos manuais permanecem disponíveis. A aplicação não guarda senha bancária nem permite pagamentos.
 
 ## Comece em seu computador
 
@@ -66,10 +66,12 @@ O projeto já contém a integração; nenhuma conta externa foi criada ou config
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave pública publishable do Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chave secreta service_role; usada apenas pelo servidor para análise de mercado |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave secreta service_role; usada apenas no servidor |
 | `BOLSAI_API_KEY` | Chave da API BolsAI, enviada no header `X-API-Key` |
+| `PLUGGY_CLIENT_ID` | Client ID da aplicação demo Pluggy; apenas no servidor |
+| `PLUGGY_CLIENT_SECRET` | Client Secret da aplicação demo Pluggy; apenas no servidor |
 | `CRON_SECRET` | Segredo aleatório de pelo menos 32 caracteres, apenas no servidor |
-| `OWNER_USER_ID` | UUID do seu usuário em Authentication; restringe a atualização manual ao proprietário |
+| `OWNER_USER_ID` | UUID do seu usuário em Authentication; restringe atualizações manuais e a conexão Pluggy ao proprietário |
 
 Para gerar o segredo no seu computador:
 
@@ -82,6 +84,7 @@ Não coloque `NEXT_PUBLIC_` nas chaves secretas. As duas variáveis públicas s�
 7. Entre no app com e-mail e senha; se necessário, use a recuperação de senha para defini-la. Faça um primeiro lançamento ou salve suas metas para gravar a carteira.
 8. Se já usou o modo local, **baixe o backup antes de ativar a conta**. Depois do login, restaure-o em Configurações. Não há migração silenciosa: restaurar substitui a carteira da conta, mediante confirmação.
 9. Abra a mesma URL e conta no outro dispositivo. As gravações são compartilhadas. Visão geral, Evolução mensal e Dividendos consultam mudanças a cada 15 segundos; outras telas recebem os dados ao retornar à Visão geral ou recarregar. Se os dois editarem simultaneamente, o app recusa uma gravação sobre versão antiga.
+10. Para o Meu Pluggy, conecte primeiro a conta bancária no serviço pessoal, associe o item à aplicação demo e salve as credenciais `PLUGGY_CLIENT_ID` e `PLUGGY_CLIENT_SECRET` na Vercel. A sincronização do app exige `OWNER_USER_ID`, salva o `Item ID` na carteira Supabase protegida por RLS e é disparada sob demanda e pelo cron diário. Esta primeira etapa importa contas e transações bancárias; cartões e investimentos ficam fora para evitar dupla contagem.
 
 A política de acesso do banco limita a leitura e alteração da carteira ao próprio usuário autenticado. As análises de empresas não contêm sua carteira e são compartilhadas entre usuários cadastrados desse projeto.
 
