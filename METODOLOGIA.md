@@ -1,6 +1,6 @@
 # Metodologia da triagem mensal — versão 1.1
 
-O objetivo é oferecer até cinco empresas para investigação, com fundamentos, liquidez e riscos visíveis. A classificação não identifica as cinco melhores ações de toda a Bolsa, não prevê retornos e não substitui a avaliação de adequação ao investidor.
+O objetivo é mostrar até 15 empresas de um universo definido, com fundamentos, liquidez e riscos visíveis, destacando até cinco maiores notas com limite de duas por setor. A classificação não identifica as cinco melhores ações de toda a Bolsa, não prevê retornos e não substitui a avaliação de adequação ao investidor.
 
 ## Universo
 
@@ -18,7 +18,7 @@ Todos precisam ser atendidos:
 4. Lucro por ação, P/L e ROE positivos; ROE até 100%. Os tetos são verificações de plausibilidade, não garantias contábeis.
 5. Não financeiras: dívida líquida/EBITDA informada e no máximo 4x. Caixa líquido é permitido. Bancos e seguradoras não são avaliados por dívida/EBITDA.
 
-DY e CAGR de lucro em cinco anos pontuam quando a API os informa. Se estiverem ausentes, a empresa não recebe esses pontos, e o painel sinaliza a ausência. Outros dados ausentes excluem a empresa quando impedem os requisitos acima. Não se usa zero para preencher um indicador desconhecido. Cada exclusão é exibida; a seleção pode conter de zero a cinco empresas.
+DY e CAGR de lucro em cinco anos pontuam quando a API os informa. Se estiverem ausentes, a empresa não recebe esses pontos, e o painel sinaliza a ausência. Outros dados ausentes excluem a empresa quando impedem os requisitos acima. Não se usa zero para preencher um indicador desconhecido. Todas as empresas do universo são exibidas; as que não passam nos filtros aparecem sem nota e com o motivo. Os destaques podem conter de zero a cinco empresas.
 
 ## Normalização
 
@@ -41,7 +41,7 @@ A função limitar(x) restringe x ao intervalo de 0 a 1. A soma é arredondada p
 
 Os cortes são heurísticos, definidos para esta primeira versão e não calibrados por evidência de retorno superior. P/L baixo pode sinalizar deterioração; ROE alto pode refletir patrimônio reduzido; DY alto pode decorrer de evento extraordinário. Não há um modelo setorial completo de valuation. Bancos/seguradoras têm nota máxima efetiva de 95 nesta versão.
 
-Ordenação: nota decrescente, código alfabético em empate. São selecionadas até cinco empresas, com no máximo duas do mesmo setor. Empresas elegíveis fora das vagas aparecem entre as não selecionadas com o motivo. Esse limite diversifica a lista, não garante diversificação da sua carteira.
+Ordenação: nota decrescente, código alfabético em empate. Os cinco destaques usam no máximo duas empresas do mesmo setor. As demais elegíveis também aparecem com sua nota, sem o selo de destaque. Esse limite diversifica a lista, não garante diversificação da sua carteira.
 
 ## O que conferir antes de comprar
 
@@ -67,6 +67,6 @@ Não transfere dinheiro nem indica um CDB específico. Os percentuais iniciais d
 
 ## Periodicidade, transparência e limites
 
-A edição é uma fotografia datada do mês. Ela não é uma cotação em tempo real e pode ficar desatualizada dentro do próprio mês; sempre confira o preço atual antes de uma decisão. A execução diária tenta gerar a edição ou completar uma edição com menos de cinco candidatas, limitada a uma tentativa por dia. Cada rodada consulta os 15 tickers em dois endpoints (até 30 chamadas), com três requisições simultâneas.
+A edição é uma fotografia datada do mês. O painel lista até 15 empresas avaliadas, inclui o motivo das sem nota e distingue visualmente os cinco destaques. Ela não é uma cotação em tempo real e pode ficar desatualizada dentro do próprio mês; sempre confira o preço atual antes de uma decisão. A execução diária tenta gerar a edição ou completar uma edição com menos de cinco candidatas, limitada a uma tentativa por dia. Cada rodada consulta os 15 tickers em dois endpoints (até 30 chamadas), com três requisições simultâneas.
 
 O universo pequeno, as diferenças contábeis, os erros do provedor e os parâmetros fixos limitam as conclusões. Ausência de uma empresa na lista não significa que seja ruim. Permanência na lista não significa que deva continuar sendo comprada a qualquer preço.

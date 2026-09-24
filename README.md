@@ -15,7 +15,7 @@ Aplicação web em português para acompanhar investimentos no computador e no c
 - Metas de reserva, divisão do aporte e simulador de longo prazo.
 - Exportação CSV, backup JSON e restauração com validação.
 - Acesso por e-mail e sincronização privada entre dispositivos após conectar o Supabase.
-- Integração com a API BolsAI para fundamentos atuais, triagem mensal de até cinco ações, motivos de exclusão e arquivo de edições anteriores.
+- Integração com a API BolsAI para fundamentos atuais, triagem mensal de até 15 ações, destaque para as cinco maiores notas, motivos de exclusão e arquivo de edições anteriores.
 - Agendamento na Vercel: verifica diariamente se falta a edição mensal ou se ela ficou incompleta. Limite de uma consulta completa por dia, inclusive pelo botão manual.
 
 As compras continuam sendo realizadas por você no Santander. O aplicativo não acessa sua conta bancária, não recebe senha do Santander e não executa ordens.
@@ -87,13 +87,13 @@ A política de acesso do banco limita a leitura e alteração da carteira ao pr�
 2. Recursos utilizados: `/fundamentals/{ticker}` e `/stocks/{ticker}/stats`. Histórico de indicadores, demonstrativos detalhados, dividendos e screener podem exigir plano Pro. Dados indisponíveis são pontuados como ausentes ou resultam em exclusões explicadas na tela.
 3. Depois de configurar `BOLSAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY` e o projeto Supabase, entre no app e use **Análise do mês → Atualizar análise**. Leia a cobertura e as datas. Não existe uma lista de ações fictícia pré-carregada.
 4. `vercel.json` agenda `/api/cron` uma vez por dia, às 12h UTC (9h de Brasília), no ambiente de produção. A execução exata depende do plano e do serviço de agendamento da Vercel. O endpoint exige o cabeçalho `Authorization: Bearer CRON_SECRET`, enviado pela Vercel.
-5. Uma edição com cinco candidatas fica arquivada no mês. A rotina diária não refaz essa edição; se houver menos de cinco, tenta no dia seguinte. O botão manual permite nova consulta, respeitando o mesmo limite diário.
+5. A edição mostra as empresas avaliadas e destaca até cinco candidatas diversificadas por setor. A rotina diária não refaz uma edição completa; se não houver cinco destaques, tenta no dia seguinte. O botão manual permite nova consulta, respeitando o mesmo limite diário.
 6. Uma rodada usa duas requisições por empresa (até 30 no total), com três consultas simultâneas. Ao receber HTTP 429, a análise é interrompida. A cota do plano Free documentada é 200 chamadas por dia.
 7. Em caso de interrupção, o dia permanece reservado para impedir consumo repetido. A próxima tentativa é no dia seguinte. Uma edição existente com maior número de empresas elegíveis é preservada se a nova resposta tiver cobertura inferior.
 
 A integração usa a API BolsAI. A cobertura depende dos fundamentos e cotações atuais disponíveis no plano configurado; não apresentamos indicadores ausentes como zero nem inventamos notas.
 
-Leia `METODOLOGIA.md`: a seleção é uma triagem quantitativa, não uma análise completa nem uma recomendação individual. Com um aporte pequeno, cinco candidatas são uma lista para estudar, não uma obrigação de comprar cinco ativos a cada mês.
+Leia `METODOLOGIA.md`: a seleção é uma triagem quantitativa, não uma análise completa nem uma recomendação individual. Os cinco destaques são uma lista para estudar, não uma obrigação de comprar cinco ativos a cada mês.
 
 ## Como registrar corretamente
 

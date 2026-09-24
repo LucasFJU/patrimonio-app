@@ -35,3 +35,15 @@ textarea{display:block;width:100%;min-height:100px;resize:vertical;border:1px so
 @media(max-width:760px){.wealth-card{grid-column:span 2}.wealth-value{font-size:36px}.metrics-grid>.metric-card:last-child{grid-column:span 2}.metric-card small,.metric-card .tag,.metric-card .text-button,.local-notice,.chart-legend,.panel-foot,.wealth-footer span,.bottom-nav button{font-size:12px}.plan-mini{grid-template-columns:1fr}.plan-mini>div{font-size:13px}.metric-label{font-size:12px}.metric-value{font-size:23px}.metric-icon{display:none}.chart-start{position:static;transform:none;margin:0 0 16px}.chart-start small{font-size:12px}.reserve-panel{display:block}.reserve-circle{width:150px;height:150px}.reserve-panel>p{font-size:12px}.panel-heading select{min-height:40px;font-size:12px}.page-heading .primary{font-size:14px}.sync-label{font-size:12px}.form-grid input{font-size:16px!important}}
 
 [data-theme=dark] :is(.local-notice,.panel-foot,.chart-legend,.metric-card small){color:var(--muted)}
+
+.stock-badges{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+.stock-featured{border-color:#9dbd84;box-shadow:0 4px 18px #355d2312}
+.stock-featured .rank-number{color:#527b3c}
+.stock-unrated{background:#fbfcfb}
+.stock-unrated-note{margin-top:18px;padding:13px 14px;border-radius:9px;background:#f6f7f5;color:#5c6861;font-size:12px}
+.stock-unrated-note strong{display:block;margin-bottom:5px;color:#43534a}
+.stock-unrated-note p{margin:0;font-size:12px}
+.add-from-contribution{margin:-6px 0 12px}
+
+[data-theme=dark] .stock-unrated-note{background:#263d32;color:#c2dbb5}
+[data-theme=dark] .stock-unrated-note strong{color:#e2f3d8}

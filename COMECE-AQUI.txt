@@ -15,7 +15,7 @@ Não precisa reenviar a conversa. Todo o código está neste pacote.
 Nenhuma senha bancária é necessária.
 
 Leia METODOLOGIA.md antes de usar a triagem de ações.
-A análise mostra até cinco candidatas para estudo; não executa compras.
+A análise mostra até 15 empresas avaliadas e destaca até cinco com melhor nota; não executa compras.
 
 Validação: 17 testes passaram, build e rotas conferidos.
 Prévia visual e integrações autenticadas ainda precisam de teste no ambiente publicado.
