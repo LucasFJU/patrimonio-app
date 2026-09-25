@@ -13,7 +13,9 @@ Aplicação web em português para acompanhar investimentos no computador e no c
 - Registro de aportes, retiradas, dividendos/JCP líquidos, reinvestimentos, transferências internas e saldos.
 - Evolução mensal separando capital novo de resultado financeiro, sem criar rentabilidade fictícia.
 - Patrimônio, metas e histórico representam os ativos registrados na carteira; receitas e saldo bancário ficam separados no controle financeiro e só entram na carteira quando registrados como aporte.
-- Controle financeiro organizado por competência mensal: visão geral, lançamentos com filtros, orçamento, cartões e faturas, contas e importação CSV.
+- Controle financeiro por competência mensal, com resumo, lançamentos, programações, cartões, orçamento, contas e importação CSV.
+- Receitas e despesas podem ocorrer uma vez, repetir por um número de meses ou sem término, ou parcelar um valor total. A prévia mostra vencimentos, valor de cada parcela e total antes de salvar.
+- Vencimentos de conta são registrados no app quando chegam, sem movimentar dinheiro no banco. A rotina diária da Vercel roda às 12h UTC; abrir o app recupera vencimentos que ficaram para trás. Cada ocorrência pode ser corrigida, adiada, cancelada ou marcada como não realizada.
 - Importação de extrato CSV com prévia, validação e detecção de duplicados, mais exportação do controle financeiro. Linhas com possíveis transferências ou pagamentos de fatura exigem lançamento manual para evitar dupla contagem.
 - Retorno pessoal ponderado pelas datas dos aportes e retiradas, além de comparação com CDI e IPCA (Banco Central/SGS) e Ibovespa (estatísticas públicas da B3). O período começa no histórico disponível; valores anteriores ao início do app não são inventados.
 - Metas de reserva, divisão do aporte e simulador de longo prazo.
@@ -84,7 +86,7 @@ Não coloque `NEXT_PUBLIC_` nas chaves secretas. As duas variáveis públicas s�
 7. Entre no app com e-mail e senha; se necessário, use a recuperação de senha para defini-la. Faça um primeiro lançamento ou salve suas metas para gravar a carteira.
 8. Se já usou o modo local, **baixe o backup antes de ativar a conta**. Depois do login, restaure-o em Configurações. Não há migração silenciosa: restaurar substitui a carteira da conta, mediante confirmação.
 9. Abra a mesma URL e conta no outro dispositivo. As gravações são compartilhadas. Visão geral, Evolução mensal e Dividendos consultam mudanças a cada 15 segundos; outras telas recebem os dados ao retornar à Visão geral ou recarregar. Se os dois editarem simultaneamente, o app recusa uma gravação sobre versão antiga.
-10. Para o Meu Pluggy, conecte primeiro a conta bancária no serviço pessoal, associe o item à aplicação demo e salve as credenciais `PLUGGY_CLIENT_ID` e `PLUGGY_CLIENT_SECRET` na Vercel. A sincronização do app exige `OWNER_USER_ID`, salva o `Item ID` na carteira Supabase protegida por RLS e é disparada sob demanda e pelo cron diário. Esta primeira etapa importa contas e transações bancárias; cartões e investimentos ficam fora para evitar dupla contagem.
+10. Para o Meu Pluggy, conecte primeiro a conta bancária no serviço pessoal, associe o item à aplicação demo e salve as credenciais `PLUGGY_CLIENT_ID` e `PLUGGY_CLIENT_SECRET` na Vercel. A sincronização do app exige `OWNER_USER_ID`, salva o `Item ID` na carteira Supabase protegida por RLS e é disparada sob demanda e pelo cron diário. Cartões e investimentos só são vinculados após associação explícita e quando o consentimento fornecer esses dados. Movimentos bancários que possam corresponder a uma programação ficam em Pendências para conciliação.
 
 A política de acesso do banco limita a leitura e alteração da carteira ao próprio usuário autenticado. As análises de empresas não contêm sua carteira e são compartilhadas entre usuários cadastrados desse projeto.
 
