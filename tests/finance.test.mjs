@@ -5,6 +5,49 @@ import {DEFAULT_FINANCE,accountBalances,addMonthlyRecurring,financeForecast,impo
 import {applyRule,previewRule} from '../lib/pluggy-sync.mjs';
 import {mergePluggyData} from '../lib/pluggy-sync.mjs';
 
+test('compra no cartão é gasto no mês, mas só altera o fluxo de caixa no pagamento',()=>{
+ const f=DEFAULT_FINANCE();
+ f.accounts=[{id:'bank',name:'Conta',type:'checking',openingBalance:1000,openingDate:'2026-01-01'}];
+ f.cards=[{id:'card',name:'Visa',accountId:'bank',closeDay:10,dueDay:20}];
+ f.transactions=[{id:'purchase',type:'card_purchase',cardId:'card',amount:200,date:'2026-01-05',description:'Mercado',category:'Alimentação',installments:1,closeDay:10,dueDay:20,invoiceMonth:'2026-01'}];
+ const jan=summarizeFinance(f,'2026-01','2026-01-31');
+ assert.equal(jan.expenses,200);
+ assert.equal(jan.netCashFlow,0);
+ assert.equal(jan.cash,1000);
+ f.transactions.push({id:'payment',type:'card_payment',cardId:'card',accountId:'bank',amount:200,date:'2026-02-20',description:'Fatura',invoiceMonth:'2026-01'});
+ const feb=summarizeFinance(f,'2026-02','2026-02-28');
+ assert.equal(feb.expenses,0);
+ assert.equal(feb.cardPayments,200);
+ assert.equal(feb.netCashFlow,-200);
+ assert.equal(feb.cash,800);
+});
+
+test('previsão não desconta novamente recorrência já lançada no mês atual',()=>{
+ const today=dateISO(),month=today.slice(0,7),f=DEFAULT_FINANCE();
+ f.accounts=[{id:'bank',name:'Conta',type:'checking',openingBalance:1000,openingDate:today}];
+ f.recurring=[{id:'rent',type:'expense',accountId:'bank',amount:100,description:'Aluguel',category:'Moradia',day:5}];
+ f.transactions=[{id:'posted',type:'expense',accountId:'bank',amount:100,date:today,description:'Aluguel',category:'Moradia',recurringId:'rent'}];
+ const forecast=financeForecast(f,month,2);
+ assert.equal(forecast.opening,900);
+ assert.equal(forecast.months[0].recurringExpenses,0);
+ assert.equal(forecast.months[0].closing,900);
+ assert.equal(forecast.months[1].recurringExpenses,100);
+ assert.equal(forecast.months[1].closing,800);
+});
+
+test('sincronização repetida mantém decisões de revisão e aporte conciliado',()=>{
+ const s=initialState(),today=dateISO(),payload={itemId:'item',updatedAt:new Date().toISOString(),accounts:[{id:'remote',name:'Santander',type:'CHECKING_ACCOUNT',balance:900,transactions:[{id:'expense',date:today,description:'PIX recebido?',amount:-50,type:'DEBIT'},{id:'cdb',date:today,description:'APLICACAO CDB/RDB',amount:-100,type:'DEBIT'}]}]};
+ const first=mergePluggyData(s,payload),finance=first.finance;
+ const expense=finance.transactions.find(t=>t.pluggyTransactionId==='expense'),cdb=finance.transactions.find(t=>t.pluggyTransactionId==='cdb');
+ expense.needsReview=false;expense.reviewDecision='excluded';expense.excludedFromBalances=true;
+ cdb.needsReview=false;cdb.reconciled=true;cdb.portfolioEventId='manual-event';
+ const again=mergePluggyData({...s,finance},payload);
+ assert.equal(again.finance.transactions.find(t=>t.pluggyTransactionId==='expense').needsReview,false);
+ assert.equal(again.finance.transactions.find(t=>t.pluggyTransactionId==='expense').excludedFromBalances,true);
+ assert.equal(again.finance.transactions.find(t=>t.pluggyTransactionId==='cdb').needsReview,false);
+ assert.equal(again.imported,0);
+});
+
 const base=()=>{const state=initialState();state.finance=DEFAULT_FINANCE();state.finance.accounts=[{id:'bank',name:'Santander',type:'checking',openingBalance:1000,openingDate:dateISO()}];return state;};
 test('transferência entre contas não vira receita ou despesa e preserva o saldo consolidado',()=>{const s=base();s.finance.accounts.push({id:'cash',name:'Dinheiro',type:'cash',openingBalance:100,openingDate:dateISO()});s.finance.transactions=[{id:'t',type:'transfer',accountId:'bank',toAccountId:'cash',amount:200,date:dateISO(),description:'Saque'}];const sum=summarizeFinance(s.finance);assert.equal(sum.cash,1100);assert.equal(sum.income,0);assert.equal(sum.expenses,0);assert.equal(sum.netCashFlow,0);assert.equal(validateState(s),s);});
 test('pagamento da fatura não duplica a despesa e reduz conta e fatura',()=>{const s=base();s.finance.cards=[{id:'card',name:'Visa',accountId:'bank',closeDay:10,dueDay:20}];const parts=installmentSchedule({date:dateISO(),amount:120,installments:1,closeDay:10,dueDay:20});const invoiceMonth=parts[0].invoiceMonth;s.finance.transactions=[{id:'buy',type:'card_purchase',cardId:'card',amount:120,date:dateISO(),description:'Mercado',category:'Alimentação',installments:1,invoiceMonth,closeDay:10,dueDay:20,installmentParts:parts},{id:'pay',type:'card_payment',cardId:'card',accountId:'bank',amount:120,date:dateISO(),description:'Fatura',invoiceMonth}];const sum=summarizeFinance(s.finance,dateISO().slice(0,7));assert.equal(sum.expenses,120);assert.equal(sum.balances.bank,880);assert.equal(invoiceSummaries(s.finance)[0].open,0);assert.equal(sum.netCashFlow,-120);validateState(s);});
