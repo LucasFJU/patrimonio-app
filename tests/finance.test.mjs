@@ -1,9 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState,validateState,calculate,dateISO,moneyWeightedReturn,householdMonthlyHistory} from '../lib/portfolio.mjs';
-import {DEFAULT_FINANCE,accountBalances,addMonthlyRecurring,closeFinanceMonth,filterFinanceTransactions,financeForecast,financeMonthClosing,importPreviewRows,installmentSchedule,invoiceSummaries,monthEnd,parseStatementCsv,reconcileFinanceDuplicate,reopenFinanceMonth,summarizeFinance,upcomingFinanceObligations,validateFinance} from '../lib/finance.mjs';
+import {DEFAULT_FINANCE,accountBalances,addMonthlyRecurring,closeFinanceMonth,filterFinanceTransactions,financeForecast,financeMonthClosing,importPreviewRows,installmentSchedule,invoiceSummaries,monthEnd,parseStatementCsv,reconcileFinanceDuplicate,reopenFinanceMonth,summarizeFinance,portfolioContributionRows,upcomingFinanceObligations,validateFinance} from '../lib/finance.mjs';
 import {applyRule,previewRule} from '../lib/pluggy-sync.mjs';
 import {mergePluggyData} from '../lib/pluggy-sync.mjs';
+
+test('aporte à carteira entra no total financeiro sem alterar o fluxo ou saldo sem débito',()=>{
+ const f=DEFAULT_FINANCE();f.accounts=[{id:'bank',name:'Conta',type:'checking',openingBalance:1000,openingDate:'2026-01-01'}];f.transactions=[{id:'income',type:'income',accountId:'bank',amount:500,date:'2026-09-02',description:'Salário',category:'Salário'},{id:'debit',type:'investment',accountId:'bank',amount:100,date:'2026-09-10',description:'Aplicação',category:'Investimento',assetId:'fund',portfolioEventId:'linked'}];
+ const events=[{id:'linked',kind:'aporte',assetId:'fund',amount:100,date:'2026-09-10'},{id:'outside',kind:'aporte',assetId:'fund',amount:50,date:'2026-09-15'}];
+ const summary=summarizeFinance(f,'2026-09','2026-09-30',events);
+ assert.equal(summary.investments,150);assert.equal(summary.cashInvestments,100);assert.deepEqual(portfolioContributionRows(events,f,'2026-09').map(e=>e.portfolioEventId),['outside']);assert.equal(summary.netCashFlow,400);assert.equal(accountBalances(f,'2026-09-30').bank,1400);
+});
 
 test('fechamento mensal preserva o retrato e sinaliza alterações posteriores',()=>{
  const f=DEFAULT_FINANCE();f.accounts=[{id:'bank',name:'Conta',type:'checking',openingBalance:1000,openingDate:'2026-01-01'}];f.transactions=[{id:'expense',type:'expense',accountId:'bank',amount:100,date:'2026-01-10',description:'Conta',category:'Moradia'}];

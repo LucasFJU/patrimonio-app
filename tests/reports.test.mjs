@@ -5,6 +5,11 @@ import {investmentPositions,allocationByInstitution} from '../lib/investment-vie
 import {financeReport,reportTransactions} from '../lib/reports.mjs';
 import {DEFAULT_FINANCE} from '../lib/finance.mjs';
 
+test('relatório soma aporte manual à carteira sem inventar saída de caixa',()=>{
+ const finance=DEFAULT_FINANCE();finance.accounts=[{id:'bank',name:'Conta',type:'checking',openingDate:'2026-01-01',openingBalance:500}];finance.transactions=[{id:'income',type:'income',accountId:'bank',amount:500,date:'2026-09-01',description:'Salário',category:'Salário'}];const events=[{id:'outside',kind:'aporte',assetId:'fund',amount:150,date:'2026-09-05',note:'Aporte fora do app'}];
+ const report=financeReport(finance,{period:'month',anchor:'2026-09',events});assert.equal(report.investments,150);assert.equal(report.cashInvestments,0);assert.equal(report.cashResult,500);assert.equal(report.rows[0].hasData,true);assert.equal(reportTransactions(finance,'2026-09',{kind:'investments',events})[0].portfolioOnly,true);
+});
+
 test('posição mostra a origem e a data do saldo sem confundir instituição com responsável',()=>{
  const state=initialState();state.startDate='2026-01-01';state.assets[0].institution='Santander';state.assets.push({id:'fund',name:'Tesouro Selic',category:'tesouro',reserve:true,initial:1000,institution:'Corretora'});
  state.events.push({id:'balance',assetId:'fund',kind:'saldo',amount:1100,date:'2026-08-31',pluggyInvestmentId:'remote',createdAt:'2026-09-01T10:00:00Z'});
