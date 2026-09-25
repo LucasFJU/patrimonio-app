@@ -24,7 +24,7 @@ textarea{display:block;width:100%;min-height:100px;resize:vertical;border:1px so
 [data-theme=dark] .teaser-watermark{color:#35523b}[data-theme=dark] .wealth-card .metric-label{color:#c5d3c7}
 @media(max-width:760px){.goal-panel{grid-template-columns:1fr}.sidebar-bottom{padding-top:14px}.side-note{display:none}.sidebar .brand{margin-bottom:24px}}
 /* Legibilidade e alvos de toque em telas pequenas. */
-:root{--muted:#637269}
+:root{--muted:#59655d}
 .sidebar-label,.user-button small,.eyebrow,.local-notice,.wealth-footer span,.metric-card small,.metric-card .text-button,.tag,.chart-legend,.chart-start small,.panel-foot,.panel-foot .text-button,.reserve-circle span,.reserve-numbers span,.reserve-panel>p,.lower .panel>p,.stock-metrics small,.bottom-nav button,footer{font-size:12px}
 .primary,.secondary,.danger-button,label{font-size:14px}
 .metric-label{white-space:normal;font-size:12px;line-height:1.5}
@@ -87,6 +87,12 @@ textarea{display:block;width:100%;min-height:100px;resize:vertical;border:1px so
 .home-month-grid>div:first-child{border-left:0;padding-left:0}
 .home-month-grid strong{font:700 clamp(17px,1.55vw,23px) 'Manrope','DM Sans',sans-serif;overflow-wrap:anywhere}
 .home-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr);gap:20px}
+.finance-transaction-actions{display:flex;align-items:center;gap:4px}.finance-transaction-actions .secondary{min-height:34px;padding:6px 10px;font-size:12px}
+.finance-transaction-detail .secondary{width:100%;min-height:44px}
+.finance-edit-overlay{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:16px;background:rgb(0 0 0/.58)}
+.finance-edit-dialog{width:min(100%,560px);max-height:min(90dvh,760px);overflow:auto;padding:22px;box-shadow:0 20px 80px rgb(0 0 0/.28)}
+.finance-edit-dialog form{display:grid;gap:13px}.finance-edit-dialog .panel-heading{align-items:flex-start}.finance-edit-dialog .panel-heading h2{margin-bottom:5px}.finance-edit-dialog .panel-heading p{margin:0}.finance-edit-dialog form>label{display:grid;gap:6px;color:var(--muted);font-size:13px}.finance-edit-dialog input,.finance-edit-dialog select{min-height:44px;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.finance-edit-dialog .button-row{justify-content:flex-end;margin-top:4px}
 .home-insights{grid-column:1/-1}
 .additional-goals{margin-bottom:20px}
 .additional-goal-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
