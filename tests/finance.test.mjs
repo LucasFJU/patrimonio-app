@@ -1,9 +1,52 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState,validateState,calculate,dateISO,moneyWeightedReturn,householdMonthlyHistory} from '../lib/portfolio.mjs';
-import {DEFAULT_FINANCE,accountBalances,addMonthlyRecurring,financeForecast,importPreviewRows,installmentSchedule,invoiceSummaries,monthEnd,parseStatementCsv,summarizeFinance,validateFinance} from '../lib/finance.mjs';
+import {DEFAULT_FINANCE,accountBalances,addMonthlyRecurring,closeFinanceMonth,filterFinanceTransactions,financeForecast,financeMonthClosing,importPreviewRows,installmentSchedule,invoiceSummaries,monthEnd,parseStatementCsv,reconcileFinanceDuplicate,reopenFinanceMonth,summarizeFinance,upcomingFinanceObligations,validateFinance} from '../lib/finance.mjs';
 import {applyRule,previewRule} from '../lib/pluggy-sync.mjs';
 import {mergePluggyData} from '../lib/pluggy-sync.mjs';
+
+test('fechamento mensal preserva o retrato e sinaliza alterações posteriores',()=>{
+ const f=DEFAULT_FINANCE();f.accounts=[{id:'bank',name:'Conta',type:'checking',openingBalance:1000,openingDate:'2026-01-01'}];f.transactions=[{id:'expense',type:'expense',accountId:'bank',amount:100,date:'2026-01-10',description:'Conta',category:'Moradia'}];
+ const closed=closeFinanceMonth(f,'2026-01','2026-02-01T12:00:00.000Z');
+ assert.equal(financeMonthClosing(closed,'2026-01').closed,true);
+ assert.equal(financeMonthClosing(closed,'2026-01').stale,false);
+ assert.equal(validateFinance(closed),true);
+ closed.transactions[0].amount=120;
+ assert.equal(financeMonthClosing(closed,'2026-01').stale,true);
+ assert.equal(financeMonthClosing(reopenFinanceMonth(closed,'2026-01'),'2026-01').closed,false);
+ assert.throws(()=>closeFinanceMonth({...f,transactions:[{...f.transactions[0],needsReview:true}]},'2026-01'),/pendências/i);
+ assert.throws(()=>closeFinanceMonth(f,dateISO().slice(0,7)),/encerrados/i);
+});
+
+test('próximos vencimentos não repetem recorrência já lançada e exibem fatura em aberto',()=>{
+ const f=DEFAULT_FINANCE();f.accounts=[{id:'bank',name:'Conta',type:'checking',openingBalance:1000,openingDate:'2026-01-01'}];f.cards=[{id:'card',name:'Visa',accountId:'bank',closeDay:10,dueDay:20}];
+ f.recurring=[{id:'rent',type:'expense',accountId:'bank',amount:300,description:'Aluguel',category:'Moradia',day:5}];
+ f.transactions=[{id:'rent-posted',type:'expense',accountId:'bank',amount:300,date:'2026-01-05',description:'Aluguel',category:'Moradia',recurringId:'rent'},{id:'purchase',type:'card_purchase',cardId:'card',amount:200,date:'2026-01-05',description:'Mercado',category:'Alimentação',installments:1,closeDay:10,dueDay:20,invoiceMonth:'2026-01'}];
+ const obligations=upcomingFinanceObligations(f,'2026-01-01',60);
+ assert.equal(obligations.some(item=>item.id==='recurring:rent:2026-01'),false);
+ assert.equal(obligations.some(item=>item.id==='recurring:rent:2026-02'),true);
+ assert.equal(obligations.some(item=>item.id==='invoice:card:2026-01'),true);
+});
+
+test('filtros distinguem cartão de conta e estados de revisão',()=>{
+ const f=DEFAULT_FINANCE();f.transactions=[{id:'bank',type:'expense',accountId:'a',amount:20,date:'2026-01-02',description:'Uber',category:'Transporte'},{id:'card',type:'card_purchase',accountId:'a',cardId:'c',amount:30,date:'2026-01-03',description:'Mercado',category:'Alimentação',needsReview:true},{id:'other',type:'expense',accountId:'b',amount:10,date:'2026-01-04',description:'Luz',category:'Energia'}];
+ assert.deepEqual(filterFinanceTransactions(f,'2026-01',{source:'account:a'}).map(t=>t.id),['bank']);
+ assert.deepEqual(filterFinanceTransactions(f,'2026-01',{source:'card:c',status:'pending'}).map(t=>t.id),['card']);
+ assert.deepEqual(filterFinanceTransactions(f,'2026-01',{search:'UBER'}).map(t=>t.id),['bank']);
+});
+
+test('duplicado sincronizado vincula lançamento manual sem duplicar saldo ou despesa',()=>{
+ const state=initialState(),today=dateISO();state.finance=DEFAULT_FINANCE();state.finance.accounts=[{id:'bank',name:'Santander',type:'checking',openingBalance:1000,openingDate:today,pluggyAccountId:'remote'}];state.finance.transactions=[{id:'manual',type:'expense',accountId:'bank',amount:50,date:today,description:'Mercado',category:'Alimentação'}];
+ const payload={itemId:'item',updatedAt:new Date().toISOString(),accounts:[{id:'remote',name:'Santander',type:'CHECKING_ACCOUNT',balance:950,transactions:[{id:'remote-1',type:'DEBIT',date:today,description:'Mercado',amount:-50,status:'POSTED'}]}]};
+ const merged=mergePluggyData(state,payload),remote=merged.finance.transactions.find(t=>t.pluggyTransactionId==='remote-1');
+ assert.equal(remote.matchingManualTransactionId,'manual');
+ const linked=reconcileFinanceDuplicate(merged.finance,remote.id);
+ assert.equal(summarizeFinance(linked).cash,950);
+ assert.equal(summarizeFinance(linked).expenses,50);
+ assert.equal(summarizeFinance(linked).review.count,0);
+ const again=mergePluggyData({...state,finance:linked},payload);
+ assert.equal(again.finance.transactions.find(t=>t.pluggyTransactionId==='remote-1').needsReview,false);
+});
 
 test('compra no cartão é gasto no mês, mas só altera o fluxo de caixa no pagamento',()=>{
  const f=DEFAULT_FINANCE();
