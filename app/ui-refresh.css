@@ -1,28 +1,31 @@
 /* Shared surfaces and semantic colors. All decoration is CSS or inline SVG. */
 :root {
-  --bg:#f4f6f9; --panel:#ffffff; --ink:#182630; --muted:#526170;
-  --line:#dce3ea; --green:#0d6b53; --lime:#e7ff69; --mint:#b5d5d1;
-  --lilac:#aa9eb8; --gray1:#17252e; --gray2:#0b1116; --gray3:#64748b;
-  --income:#10744f; --expense:#bd3549; --investment:#1761b5;
-  --dividend:#946000; --cashflow:#7250aa; --danger:#bd3549; --focus:#116a95;
-  --surface-soft:#edf2f6; --radius:18px; --shadow:0 3px 14px #132b4207;
+  --bg:#f3f5f2; --panel:#ffffff; --ink:#171a17; --muted:#667067;
+  --line:#dce2dc; --green:#087c54; --lime:#b8ff32; --mint:#b5d5d1;
+  --lilac:#aa9eb8; --gray1:#242724; --gray2:#1b1d1b; --gray3:#777c77;
+  --income:#087c54; --expense:#c84952; --investment:#16805b;
+  --dividend:#a47a18; --cashflow:#775ca4; --danger:#c84952; --focus:#16805b;
+  --surface-soft:#edf1ec; --radius:16px; --shadow:0 8px 24px #0d211008;
+  --font-ui:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
 }
 :root[data-theme=dark] {
-  color-scheme:dark; --bg:#0b1116; --panel:#141e27; --ink:#eef4f8;
-  --muted:#afbdca; --line:#2b3b49; --green:#83ddbd;
-  --income:#7edbb0; --expense:#ffa0a5; --investment:#8cbcff;
-  --dividend:#f3c774; --cashflow:#c1a5f2; --danger:#ffa0a5; --focus:#b5d5d1;
-  --surface-soft:#1a2833; --shadow:0 5px 20px #00000015;
+  color-scheme:dark; --bg:#090b09; --panel:#131613; --ink:#f1f4ef;
+  --muted:#a1aaa0; --line:#292e29; --green:#00d68f; --lime:#b8ff32;
+  --income:#51e6a6; --expense:#ff7979; --investment:#9de33f;
+  --dividend:#f0c45a; --cashflow:#b6a1df; --danger:#ff7979; --focus:#b8ff32;
+  --surface-soft:#1a1e1a; --shadow:0 12px 32px #00000032;
 }
-body {font-family:system-ui,-apple-system,'Segoe UI',sans-serif; font-variant-numeric:tabular-nums;}
-.app-shell :is(h1,h2,h3,.large-number,.home-hero-value,.metric-value,.wealth-value) {font-family:inherit;}
+body {font-family:var(--font-ui);font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+.app-shell :is(h1,h2,h3,.large-number,.home-hero-value,.metric-value,.wealth-value) {font-family:var(--font-ui);}
+.app-shell h1 {font-size:clamp(27px,3vw,36px);font-weight:720;letter-spacing:-1.35px;}
+.app-shell h2 {letter-spacing:-.5px;}
 .app-shell :is(.panel,.metric-card,.auth-card) {background:var(--panel); border-color:var(--line); box-shadow:var(--shadow);}
 .app-shell :is(.sidebar,.topbar) {background:var(--panel); color:var(--ink);}
 .app-shell :is(.sidebar nav button,.breadcrumb,.sync-label,.eyebrow,.local-notice,.metric-label,.panel-heading p,.metric-card small,.user-button small) {color:var(--muted);}
 .app-shell .sidebar nav button.nav-active {background:var(--surface-soft); color:var(--ink); box-shadow:inset 3px 0 var(--green);}
 .app-shell .sidebar nav button.nav-active svg {color:var(--green);}
 .app-shell :is(.side-note,.avatar,.mini-avatar,.metric-icon,.empty-icon,.form-hint,.neutral) {background:var(--surface-soft); color:var(--muted); border-color:var(--line);}
-.app-shell .brandmark {background:#123c32; color:var(--lime);}
+.app-shell .brandmark {background:#111811; color:var(--lime);}
 .app-shell .brand-dot {color:var(--green);}
 .app-shell .primary {background:var(--lime);color:#1f1f21;border:1px solid #cce550;}
 .app-shell .secondary {background:var(--panel);color:var(--ink);border-color:var(--line);}
@@ -42,16 +45,17 @@ body {font-family:system-ui,-apple-system,'Segoe UI',sans-serif; font-variant-nu
 .app-shell .notice.danger {background:color-mix(in srgb,var(--expense) 10%,var(--panel));color:var(--expense);}
 .app-shell .tag.green {background:color-mix(in srgb,var(--income) 12%,var(--panel));color:var(--income);}
 .app-shell .tag.amber {background:color-mix(in srgb,var(--dividend) 12%,var(--panel));color:var(--dividend);}
-.app-shell .home-hero {background:linear-gradient(115deg,#104f40 0%,#123d35 47%,#101d25 100%);border-color:#266352;color:#fff;padding:30px;}
+.app-shell .home-hero {background:radial-gradient(ellipse at 80% 5%,#17432e 0%,transparent 42%),linear-gradient(118deg,#111713 0%,#0c110d 58%,#101612 100%);border-color:#2b3a2e;color:#fff;padding:34px;box-shadow:0 18px 50px #0310083b;}
 .app-shell .home-hero :is(h2,.home-hero-value) {color:#fff;}
 .app-shell .home-hero .eyebrow {color:#bce6d6;}
 .app-shell .home-hero :is(p,small,.home-hero-results span) {color:#d0e3dd;}
 .app-shell .home-hero .negative {color:#ffb4b7!important;}
 .home-hero-results>div {border:1px solid #ffffff22;background:#ffffff0a;border-radius:13px;padding:16px;}
 .home-hero-results .secondary {grid-column:1/-1;justify-self:end;}
-.home-hero-value {font-size:clamp(30px,3.5vw,52px);}
+.home-hero-value {font-size:clamp(36px,4.8vw,62px);font-weight:720;letter-spacing:-2.2px;line-height:1.02;font-feature-settings:'tnum';}
+.home-hero-results strong {font-size:clamp(20px,2.1vw,29px);font-weight:680;letter-spacing:-.8px;}
 .home-month-grid {gap:10px;}
-.home-month-grid .home-month-metric {display:grid;gap:9px;text-align:left;align-content:start;min-width:0;border:1px solid var(--line);border-top:3px solid var(--metric-color,var(--green));border-radius:12px;background:var(--panel);padding:16px 12px;color:var(--ink);}
+.home-month-grid .home-month-metric {display:grid;gap:10px;text-align:left;align-content:start;min-width:0;border:1px solid var(--line);border-top:3px solid var(--metric-color,var(--green));border-radius:12px;background:var(--panel);padding:18px 15px;color:var(--ink);transition:transform .16s ease,border-color .16s ease,background .16s ease;}
 .home-month-metric>span {font-size:12px;}
 .home-month-metric>small {font-size:10px;color:var(--muted);}
 .home-month-metric svg {color:var(--metric-color);margin-bottom:2px;}
@@ -61,7 +65,7 @@ body {font-family:system-ui,-apple-system,'Segoe UI',sans-serif; font-variant-nu
 [data-semantic=investment] {--metric-color:var(--investment);}
 [data-semantic=dividend] {--metric-color:var(--dividend);}
 [data-semantic=cashflow] {--metric-color:var(--cashflow);}
-.home-month-grid strong {font-size:clamp(17px,1.5vw,23px);letter-spacing:-.6px;}
+.home-month-grid strong {font-size:clamp(19px,1.8vw,26px);font-weight:690;letter-spacing:-.8px;}
 .home-goal progress {accent-color:var(--goal-color,var(--green));}
 .home-goal progress::-webkit-progress-value {background:var(--goal-color,var(--green));}
 .home-goal progress::-moz-progress-bar {background:var(--goal-color,var(--green));}
@@ -88,6 +92,18 @@ body {font-family:system-ui,-apple-system,'Segoe UI',sans-serif; font-variant-nu
 .reset-panel button {flex-shrink:0;}
 .app-shell .empty {padding:30px 16px;}
 .app-shell .stat-action {border-top:3px solid var(--metric-color,var(--cashflow));box-shadow:var(--shadow);}
+.app-shell .stat-action strong,.app-shell .finance-stats .panel strong,.app-shell .dividend-metric>strong {font-variant-numeric:tabular-nums;letter-spacing:-.7px;}
+.app-shell .finance-dashboard {background:linear-gradient(125deg,color-mix(in srgb,var(--green) 12%,var(--panel)),var(--panel) 66%);border-top:3px solid var(--cashflow);}
+.app-shell .finance-stats .panel {border-top:3px solid var(--metric-color,var(--line));}
+.app-shell .finance-stats .panel:nth-child(1) {--metric-color:var(--income);}
+.app-shell .finance-stats .panel:nth-child(2) {--metric-color:var(--expense);}
+.app-shell .finance-stats .panel:nth-child(3) {--metric-color:var(--investment);}
+.app-shell .finance-stats .panel:nth-child(4) {--metric-color:var(--cashflow);}
+.app-shell .finance-stats .panel:nth-child(5) {--metric-color:var(--green);}
+.app-shell .investment-summary {background:linear-gradient(125deg,color-mix(in srgb,var(--green) 13%,var(--panel)),var(--panel) 70%);border-top:3px solid var(--investment);}
+.app-shell .investment-summary>div>strong {font-size:clamp(32px,4vw,48px);letter-spacing:-1.5px;}
+.app-shell .page-heading .eyebrow {letter-spacing:1.7px;font-weight:720;}
+.app-shell .panel {border-radius:var(--radius);}
 .decision-stats .stat-action:nth-child(1),.decision-stats .stat-action:nth-child(3) {--metric-color:var(--income);}
 .decision-stats .stat-action:nth-child(2),.decision-stats .stat-action:nth-child(4) {--metric-color:var(--expense);}
 .app-shell .reports-metrics>div {border-top:3px solid var(--cashflow);}
@@ -102,7 +118,7 @@ body {font-family:system-ui,-apple-system,'Segoe UI',sans-serif; font-variant-nu
  .main-shell main {padding-left:16px;padding-right:16px;}
  .app-shell .topbar {padding:0 16px;gap:8px;}
  .top-actions {gap:8px;}.top-actions .mini-avatar {display:none;}
- .app-shell .home-hero {padding:23px;}.home-hero-results {grid-template-columns:1fr 1fr;padding-top:0;border:0;gap:8px;}
+ .app-shell .home-hero {padding:23px;}.home-hero-value {font-size:clamp(34px,10vw,48px);letter-spacing:-1.4px;}.home-hero-results {grid-template-columns:1fr 1fr;padding-top:0;border:0;gap:8px;}
  .home-hero-results>div {padding:12px;}.home-hero-results strong {font-size:20px;}.home-hero-results .secondary {grid-column:1/-1;width:100%;}
  .home-month-grid {grid-template-columns:repeat(2,minmax(0,1fr));}.home-month-grid .home-month-metric {padding:13px 10px;}.home-month-metric:last-child {grid-column:1/-1;}
  .app-shell .panel {padding:18px;}.app-shell .page-heading {align-items:flex-start;}.page-heading h1 {font-size:25px;}
