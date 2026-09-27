@@ -1,12 +1,15 @@
 'use client';
 import {useEffect,useState} from 'react';
-import {Moon,Sun} from 'lucide-react';
-import {CATEGORIES,dateISO,rebalance} from '../lib/portfolio.mjs';
+import {Moon,Sun,Monitor,Calculator,Target} from 'lucide-react';
+import {CATEGORIES,COLORS,dateISO} from '../lib/portfolio.mjs';
+import {simulateContribution,monthContributionProgress} from '../lib/investment-simulation.mjs';
 
 export function ThemeSwitch(){
- const [dark,setDark]=useState(false);
- useEffect(()=>{const media=matchMedia('(prefers-color-scheme: dark)');let saved;try{saved=localStorage.getItem('patrimonio-theme')}catch{}const apply=value=>{setDark(value);document.documentElement.dataset.theme=value?'dark':'light'};apply(saved?saved==='dark':media.matches);const change=e=>{let preference;try{preference=localStorage.getItem('patrimonio-theme')}catch{}if(!preference)apply(e.matches)};media.addEventListener('change',change);return()=>media.removeEventListener('change',change)},[]);
- return <button className="icon-button" aria-label={dark?'Ativar tema claro':'Ativar tema escuro'} onClick={()=>{const value=!dark;setDark(value);document.documentElement.dataset.theme=value?'dark':'light';try{localStorage.setItem('patrimonio-theme',value?'dark':'light')}catch{}}}>{dark?<Sun size={19}/>:<Moon size={19}/>}</button>;
+ const [preference,setPreference]=useState('auto');
+ useEffect(()=>{let saved;try{saved=localStorage.getItem('patrimonio-theme')}catch{}setPreference(['dark','light'].includes(saved)?saved:'auto');},[]);
+ useEffect(()=>{const media=matchMedia('(prefers-color-scheme: dark)');const apply=()=>{document.documentElement.dataset.theme=(preference==='auto'?media.matches:preference==='dark')?'dark':'light'};apply();media.addEventListener('change',apply);return()=>media.removeEventListener('change',apply)},[preference]);
+ const Icon=preference==='auto'?Monitor:preference==='dark'?Moon:Sun;
+ return <label className="theme-preference"><Icon size={17} aria-hidden="true"/><span className="sr-only">Aparência</span><select aria-label="Aparência" value={preference} onChange={event=>{const value=event.target.value;setPreference(value);try{if(value==='auto')localStorage.removeItem('patrimonio-theme');else localStorage.setItem('patrimonio-theme',value)}catch{}}}><option value="auto">Automático</option><option value="light">Claro</option><option value="dark">Escuro</option></select></label>;
 }
 
 export function AuthPanel({client,recovery,onRecovered}){
@@ -26,4 +29,14 @@ export function PositionFields({asset}){return <><div className="form-grid"><lab
 export function readPosition(f){return {quantity:f.get('quantity')===''?null:Number(f.get('quantity')),averagePrice:f.get('averagePrice')===''?null:Number(f.get('averagePrice')),purchaseDate:f.get('purchaseDate')||'',institution:String(f.get('institution')||'').trim(),owner:String(f.get('owner')||'').trim()}}
 
 export function WealthGoal({state,calc,portfolioCalc=calc,display}){const target=state.settings.wealthGoal||1000000;return <section className="panel goal-panel spaced"><div><span className="eyebrow">META DE PATRIMÔNIO FAMILIAR</span><h2>{display(calc.total)} <span className="muted small">de {display(target)}</span></h2><p className="muted small">Capital familiar acumulado: {display(calc.netInvested)} · Aportes na carteira: {display(portfolioCalc.deposits)}</p></div><div><strong>{Math.min(100,calc.total/target*100).toLocaleString('pt-BR',{maximumFractionDigits:2})}%</strong><progress aria-label="Progresso da meta patrimonial" max={target} value={Math.max(0,calc.total)}/></div></section>}
-export function Rebalance({state,display}){return <article className="panel table-wrap spaced"><h2>Distribuição atual e suas metas</h2><p className="muted small">Comparação com os percentuais que você definiu. Caixa de dividendos excluído; não é uma ordem de compra ou venda.</p><table><thead><tr><th>Classe</th><th>Atual</th><th>Meta</th><th>Diferença para a meta</th></tr></thead><tbody>{rebalance(state).map(r=><tr key={r.key}><td>{CATEGORIES[r.key]}</td><td>{r.current.toFixed(1)}%</td><td>{r.target}%</td><td>{r.gap>0?'Faltam ':r.gap<0?'Acima em ':''}{display(Math.abs(r.gap))}</td></tr>)}</tbody></table></article>}
+export function Rebalance({state,display}){
+ const [amount,setAmount]=useState(String(state.settings.monthly)),progress=monthContributionProgress(state),validAmount=amount!==''&&Number.isFinite(Number(amount))&&Number(amount)>=0&&Number(amount)<=1e12;
+ const rows=simulateContribution(state,validAmount?Number(amount):0),activeRows=rows.filter(row=>row.target>0||row.value>0);
+ return <article className="panel rebalance-panel spaced"><div className="panel-heading"><div><span className="eyebrow">PRÓXIMO APORTE</span><h2>Simule sua distribuição</h2><p>Uma simulação pelos percentuais que você definiu, sem movimentar a carteira.</p></div><Calculator size={23} aria-hidden="true"/></div>
+  <div className="rebalance-inputs"><label>Valor para simular (R$)<input type="number" min="0" max="1000000000000" step="0.01" value={amount} onChange={event=>setAmount(event.target.value)} aria-describedby="rebalance-explanation"/></label><div className="rebalance-presets"><button type="button" className="secondary" onClick={()=>setAmount(String(progress.goal))}><Target size={15}/>Meta mensal <b>{display(progress.goal)}</b></button><button type="button" className="secondary" onClick={()=>setAmount(String(progress.remaining))}>Restante do mês <b>{display(progress.remaining)}</b></button></div></div>
+  <p className="small muted" id="rebalance-explanation">Já aportado neste mês: <strong>{display(progress.deposited)}</strong>. Caixa de dividendos fica fora da distribuição. Os valores simulados priorizam classes abaixo da sua meta.</p>
+  {!validAmount&&<p role="status" className="negative small">Informe um valor válido para simular.</p>}
+  <div className="rebalance-rows">{activeRows.map(row=><div className="rebalance-row" key={row.key} style={{'--asset-color':COLORS[row.key]}}><div className="rebalance-class"><i/><strong>{CATEGORIES[row.key]}</strong><span>Meta {row.target}%</span></div><div className="rebalance-progress"><div className="rebalance-track" role="img" aria-label={`Atual ${row.current.toFixed(1)}%, após simulação ${row.after.toFixed(1)}%, meta ${row.target}%`}><i style={{width:`${Math.min(100,row.current)}%`}}/><b style={{left:`${Math.min(100,row.target)}%`}}/></div><span>Atual {row.current.toLocaleString('pt-BR',{maximumFractionDigits:1})}% <span aria-hidden="true">→</span> Depois {row.after.toLocaleString('pt-BR',{maximumFractionDigits:1})}%</span></div><div className="rebalance-amount"><small>Aporte simulado</small><strong>{display(row.suggested)}</strong></div></div>)}</div>
+  <div className="rebalance-total"><span>Total distribuído</span><strong>{display(rows.reduce((sum,row)=>sum+row.suggested,0))}</strong></div>
+ </article>;
+}

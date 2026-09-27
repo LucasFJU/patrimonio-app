@@ -1,0 +1,71 @@
+.theme-preference{display:inline-flex;align-items:center;gap:6px;color:var(--muted);margin:0;flex:none}
+.theme-preference select{max-width:124px;min-height:36px;padding:5px 6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;font-size:12px}
+.investment-position-panel .investment-position{border-left:4px solid var(--asset-color);background:var(--panel);box-shadow:0 3px 12px #07131a04}
+.investment-position-panel .investment-position-icon{color:var(--asset-color);background:color-mix(in srgb,var(--asset-color) 11%,var(--panel))}
+.investment-position-balance{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:18px 0 12px;justify-content:space-between}
+.investment-position-balance .investment-position-value{margin:0;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.investment-participation{padding:5px 8px;border-radius:7px;color:var(--ink);background:color-mix(in srgb,var(--asset-color) 10%,var(--panel));font-size:11px;white-space:nowrap}
+.investment-weight{height:4px;border-radius:4px;background:var(--bg);overflow:hidden;margin:0 0 20px}
+.investment-weight i{display:block;height:100%;background:var(--asset-color);border-radius:4px}
+.investment-position-meta{font-variant-numeric:tabular-nums;grid-template-columns:minmax(80px,1fr) minmax(0,1.3fr);line-height:1.5}
+.investment-institution-list button{min-height:76px}
+.investment-institution-list button.selected{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.dividends-page{display:grid;gap:20px;min-width:0}
+.dividend-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.dividend-metric{border-top:3px solid var(--metric-tone);padding:20px;min-width:0}
+.dividend-metric--income{--metric-tone:#15803d}.dividend-metric--dividend{--metric-tone:#d97706}.dividend-metric--investment{--metric-tone:#0d6b53}.dividend-metric--yield{--metric-tone:#b98218}
+.dividend-metric>div{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;font-size:12px;color:var(--muted)}
+.dividend-metric>div svg{flex:none;color:var(--metric-tone)}
+.dividend-metric>strong{display:block;font-size:clamp(18px,2vw,27px);font-weight:750;font-variant-numeric:tabular-nums;line-height:1.25;letter-spacing:-.7px;overflow-wrap:anywhere}
+.dividend-metric>small{display:block;margin-top:10px;color:var(--muted);font-size:11px;line-height:1.5}
+.dividend-chart-summary{display:grid;gap:4px;margin:8px 0 8px}
+.dividend-chart-summary>span{text-transform:capitalize;color:var(--muted);font-size:13px}
+.dividend-chart-summary>strong{font-size:28px;letter-spacing:-.7px;font-variant-numeric:tabular-nums}
+.dividend-chart-summary>small{font-size:12px;color:var(--muted)}
+.dividend-bars{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.dividend-bars>button{display:flex;flex-direction:column;gap:6px;align-items:center;min-width:0;background:transparent;color:var(--muted);border-radius:8px;padding:8px 3px;min-height:195px;font-size:12px}
+.dividend-bars>button.selected{background:color-mix(in srgb,#d97706 9%,var(--panel));color:var(--ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,#d97706 30%,var(--line))}
+.dividend-bars>button:hover{background:var(--bg)}
+.dividend-bars>button small{font-size:10px;line-height:1}
+.dividend-bar-space{display:block;width:min(38px,100%);height:140px;position:relative}
+.dividend-bar-space svg{width:100%;height:100%;display:block;fill:color-mix(in srgb,#d97706 70%,var(--panel))}
+.dividend-bars>button.selected svg{fill:#d97706}
+.dividend-bar-space>i{position:absolute;bottom:0;left:10%;right:10%;height:2px;background:var(--line);border-radius:3px}
+.dividend-chart-legend{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted);margin:18px 0}
+.dividend-chart-legend>i{width:8px;height:8px;background:#d97706;border-radius:2px}
+.dividend-chart-legend>small{margin-left:auto;font-size:11px}
+.dividend-text-data{border-top:1px solid var(--line);padding-top:14px;font-size:13px}
+.dividend-text-data summary{cursor:pointer;color:var(--muted)}
+.dividend-text-data td:nth-child(n+2),.dividend-text-data th:nth-child(n+2),.dividend-assets td:nth-child(n+2),.dividend-assets th:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}
+.dividend-assets .table-wrap{max-width:100%}
+.dividend-assets table{font-size:13px}
+.dividend-asset-name{display:flex;gap:10px;align-items:center;max-width:270px;white-space:normal}
+.dividend-asset-name>i{width:4px;min-height:30px;border-radius:3px;flex:none}
+.dividend-asset-name>span{display:grid;gap:4px;overflow-wrap:anywhere}
+.dividend-asset-name small{font-size:11px;line-height:1.5;color:var(--muted)}
+.dividend-method{font-size:12px;line-height:1.65;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;margin:18px 0 0}
+.dividend-assets .empty-compact h3{margin:12px 0 8px;color:var(--ink)}
+.dividend-assets .empty-compact p{margin:0;font-size:13px}
+.rebalance-panel{min-width:0}
+.rebalance-inputs{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:22px 0 12px}
+.rebalance-inputs>label{display:grid;gap:8px;font-size:12px;color:var(--muted);max-width:260px;flex:1 1 210px}
+.rebalance-inputs input{width:100%;min-height:48px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--bg);color:var(--ink);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;margin:0}
+.rebalance-presets{display:flex;gap:8px;flex-wrap:wrap}
+.rebalance-presets button{font-size:12px;min-height:46px;gap:8px}
+.rebalance-presets button b{font-variant-numeric:tabular-nums}
+.rebalance-rows{margin-top:24px}
+.rebalance-row{display:grid;grid-template-columns:minmax(130px,1.05fr) minmax(130px,1.4fr) minmax(110px,.6fr);align-items:center;gap:22px;padding:18px 0;border-top:1px solid var(--line)}
+.rebalance-class{display:grid;grid-template-columns:8px minmax(0,1fr);gap:5px 9px;font-size:13px}
+.rebalance-class>i{width:8px;height:8px;border-radius:50%;background:var(--asset-color);align-self:center}
+.rebalance-class>span{grid-column:2;font-size:11px;color:var(--muted)}
+.rebalance-progress>span{display:block;font-size:11px;color:var(--muted);margin-top:9px;font-variant-numeric:tabular-nums}
+.rebalance-track{height:7px;background:var(--bg);position:relative;border-radius:8px}
+.rebalance-track>i{display:block;height:100%;border-radius:8px;background:var(--asset-color)}
+.rebalance-track>b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);transform:translateX(-1px)}
+.rebalance-amount{text-align:right;font-variant-numeric:tabular-nums}
+.rebalance-amount>small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}
+.rebalance-amount>strong{font-size:17px}
+.rebalance-total{display:flex;align-items:center;justify-content:space-between;gap:14px;border-top:1px solid var(--line);padding-top:18px;font-size:13px}
+.rebalance-total strong{font-size:21px;font-variant-numeric:tabular-nums}
+@media(max-width:1100px){.dividend-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.dividends-page{gap:14px}.dividend-metrics{gap:10px}.dividend-metric{padding:15px}.dividend-metric>div{font-size:11px;margin-bottom:12px;gap:5px}.dividend-metric>div svg{width:16px}.dividend-metric>small{font-size:10px}.dividend-chart-panel>.panel-heading,.dividend-assets>.panel-heading{align-items:flex-start;flex-wrap:wrap}.dividend-chart-panel .primary,.dividend-assets .secondary{font-size:12px}.dividend-bars{gap:2px;margin-inline:-8px}.dividend-bars>button{font-size:10px;padding-inline:1px}.dividend-bars>button small{font-size:9px}.dividend-chart-legend>small{margin-left:0;flex-basis:100%}.rebalance-inputs>label{max-width:none;flex-basis:100%}.rebalance-presets{width:100%}.rebalance-presets button{flex:1;flex-wrap:wrap;padding:9px}.rebalance-row{grid-template-columns:minmax(0,1fr) auto;gap:12px}.rebalance-progress{grid-column:1/-1;grid-row:2}.rebalance-amount{grid-column:2;grid-row:1}.rebalance-amount>strong{font-size:16px}.theme-preference{gap:4px}.theme-preference select{max-width:99px;font-size:11px}.investment-position-top .text-button{font-size:11px}}
