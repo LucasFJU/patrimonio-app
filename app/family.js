@@ -1,15 +1,14 @@
 'use client';
 import {useEffect,useState} from 'react';
-import {Moon,Sun,Monitor,Calculator,Target} from 'lucide-react';
+import {Moon,Sun,Calculator,Target} from 'lucide-react';
 import {CATEGORIES,COLORS,dateISO} from '../lib/portfolio.mjs';
 import {simulateContribution,monthContributionProgress} from '../lib/investment-simulation.mjs';
 
 export function ThemeSwitch(){
- const [preference,setPreference]=useState('auto');
- useEffect(()=>{let saved;try{saved=localStorage.getItem('patrimonio-theme')}catch{}setPreference(['dark','light'].includes(saved)?saved:'auto');},[]);
- useEffect(()=>{const media=matchMedia('(prefers-color-scheme: dark)');const apply=()=>{document.documentElement.dataset.theme=(preference==='auto'?media.matches:preference==='dark')?'dark':'light'};apply();media.addEventListener('change',apply);return()=>media.removeEventListener('change',apply)},[preference]);
- const Icon=preference==='auto'?Monitor:preference==='dark'?Moon:Sun;
- return <label className="theme-preference"><Icon size={17} aria-hidden="true"/><span className="sr-only">Aparência</span><select aria-label="Aparência" value={preference} onChange={event=>{const value=event.target.value;setPreference(value);try{if(value==='auto')localStorage.removeItem('patrimonio-theme');else localStorage.setItem('patrimonio-theme',value)}catch{}}}><option value="auto">Automático</option><option value="light">Claro</option><option value="dark">Escuro</option></select></label>;
+ const [dark,setDark]=useState(false);
+ useEffect(()=>{const media=matchMedia('(prefers-color-scheme: dark)');const apply=()=>{let saved;try{saved=localStorage.getItem('patrimonio-theme')}catch{}const next=saved==='dark'||(saved!=='light'&&media.matches);document.documentElement.dataset.theme=next?'dark':'light';setDark(next)};apply();media.addEventListener('change',apply);return()=>media.removeEventListener('change',apply)},[]);
+ const toggle=()=>{const next=!dark;document.documentElement.dataset.theme=next?'dark':'light';setDark(next);try{localStorage.setItem('patrimonio-theme',next?'dark':'light')}catch{}};
+ return <button type="button" className="icon-button theme-toggle" aria-label={dark?'Mudar para tema claro':'Mudar para tema escuro'} title={dark?'Tema escuro · alternar para claro':'Tema claro · alternar para escuro'} aria-pressed={dark} onClick={toggle}>{dark?<Sun size={18} aria-hidden="true"/>:<Moon size={18} aria-hidden="true"/>}</button>;
 }
 
 export function AuthPanel({client,recovery,onRecovered}){

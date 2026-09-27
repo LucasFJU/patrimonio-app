@@ -297,7 +297,7 @@
 @media(max-width:700px) {
   .finance-page {gap:15px}
   .finance-page .panel {padding:18px}
-  .finance-context-nav {padding:15px}
+  .finance-context-nav {padding:16px}
   .finance-page .finance-monthbar>div:first-child {display:block}
   .finance-monthbar h2 {font-size:22px!important}
   .finance-month-controls {gap:6px}
@@ -355,6 +355,9 @@
   .finance-page .calendar-day button {display:block;width:100%;height:11px;min-height:11px;margin-top:5px;padding:0;border-radius:99px;background:var(--income)}
   .finance-page .calendar-day button.negative {background:var(--expense)}
   .finance-page .calendar-day button :is(span,strong,small) {display:none}
+}
+@media(max-width:819px) {
+  .finance-page .panel,.finance-context-nav {padding:16px!important}
 }
 @media(prefers-reduced-motion:reduce) {
   .finance-page * {scroll-behavior:auto!important;transition:none!important;animation:none!important}
