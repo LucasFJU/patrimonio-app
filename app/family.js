@@ -1,14 +1,12 @@
 'use client';
 import {useEffect,useState} from 'react';
-import {Moon,Sun,Calculator,Target} from 'lucide-react';
-import {CATEGORIES,COLORS,dateISO} from '../lib/portfolio.mjs';
-import {simulateContribution,monthContributionProgress} from '../lib/investment-simulation.mjs';
+import {Moon,Sun,Plus,Calculator} from 'lucide-react';
+import {CATEGORIES,COLORS,dateISO,rebalance,simulateSmartContribution} from '../lib/portfolio.mjs';
 
 export function ThemeSwitch(){
- const [dark,setDark]=useState(false);
- useEffect(()=>{const media=matchMedia('(prefers-color-scheme: dark)');const apply=()=>{let saved;try{saved=localStorage.getItem('patrimonio-theme')}catch{}const next=saved==='dark'||(saved!=='light'&&media.matches);document.documentElement.dataset.theme=next?'dark':'light';setDark(next)};apply();media.addEventListener('change',apply);return()=>media.removeEventListener('change',apply)},[]);
- const toggle=()=>{const next=!dark;document.documentElement.dataset.theme=next?'dark':'light';setDark(next);try{localStorage.setItem('patrimonio-theme',next?'dark':'light')}catch{}};
- return <button type="button" className="icon-button theme-toggle" aria-label={dark?'Mudar para tema claro':'Mudar para tema escuro'} title={dark?'Tema escuro · alternar para claro':'Tema claro · alternar para escuro'} aria-pressed={dark} onClick={toggle}>{dark?<Sun size={18} aria-hidden="true"/>:<Moon size={18} aria-hidden="true"/>}</button>;
+ const [dark,setDark]=useState(true);
+ useEffect(()=>{const media=matchMedia('(prefers-color-scheme: light)');let saved;try{saved=localStorage.getItem('patrimonio-theme')}catch{}const apply=value=>{setDark(value);document.documentElement.dataset.theme=value?'dark':'light'};apply(saved?saved==='dark':true);const change=e=>{let preference;try{preference=localStorage.getItem('patrimonio-theme')}catch{}if(!preference)apply(!e.matches)};media.addEventListener('change',change);return()=>media.removeEventListener('change',change)},[]);
+ return <button className="icon-button" aria-label={dark?'Ativar tema claro':'Ativar tema escuro'} onClick={()=>{const value=!dark;setDark(value);document.documentElement.dataset.theme=value?'dark':'light';try{localStorage.setItem('patrimonio-theme',value?'dark':'light')}catch{}}}>{dark?<Sun size={19}/>:<Moon size={19}/>}</button>;
 }
 
 export function AuthPanel({client,recovery,onRecovered}){
@@ -24,18 +22,64 @@ export function AuthPanel({client,recovery,onRecovered}){
  return <div className="auth-overlay"><form className="auth-card" onSubmit={submit}><h1>{current==='password'?'Defina sua senha':current==='reset'?'Recuperar acesso':'Patrimônio familiar'}</h1><p>Uma conta para vocês. A mesma carteira em todos os aparelhos.</p>{current!=='password'&&<label>Seu e-mail<input name="email" type="email" autoComplete="email" required/></label>}{current!=='reset'&&<label>{current==='password'?'Nova senha':'Senha'}<input name="password" type="password" autoComplete={current==='password'?'new-password':'current-password'} minLength={current==='password'?8:undefined} required/></label>}{current==='password'&&<label>Confirme a nova senha<input name="confirm" type="password" autoComplete="new-password" minLength={8} required/></label>}{message&&<p role="status" className="notice">{message}</p>}<button className="primary full" disabled={busy}>{busy?'Aguarde…':current==='password'?'Salvar senha':current==='reset'?'Enviar link':'Entrar'}</button>{current!=='password'&&<button type="button" className="secondary full spaced" disabled={busy} onClick={()=>{setMode(mode==='login'?'reset':'login');setMessage('')}}>{mode==='login'?'Esqueci ou ainda não defini minha senha':'Voltar para o login'}</button>}<small>Acesso exclusivo para a conta já cadastrada.</small></form></div>;
 }
 
-export function PositionFields({asset}){return <><div className="form-grid"><label>Quantidade atual (opcional)<input name="quantity" type="number" min="0" step="any" defaultValue={asset?.quantity??''}/></label><label>Preço médio em reais (opcional)<input name="averagePrice" type="number" min="0" step="any" defaultValue={asset?.averagePrice??''}/></label><label>Data da compra (opcional)<input name="purchaseDate" type="date" max={dateISO()} defaultValue={asset?.purchaseDate||''}/></label><label>Instituição da posição<input name="institution" maxLength={80} placeholder="Ex.: Santander, corretora ou Tesouro Direto" defaultValue={asset?.institution||''}/></label><label>Responsável (opcional)<input name="owner" maxLength={60} placeholder="Lucas / esposa" defaultValue={asset?.owner||''}/></label></div><p className="muted small">A instituição organiza a alocação por local de custódia. Quantidade × preço médio informa o custo da posição; saldos e aportes continuam nos lançamentos.</p></>}
-export function readPosition(f){return {quantity:f.get('quantity')===''?null:Number(f.get('quantity')),averagePrice:f.get('averagePrice')===''?null:Number(f.get('averagePrice')),purchaseDate:f.get('purchaseDate')||'',institution:String(f.get('institution')||'').trim(),owner:String(f.get('owner')||'').trim()}}
+export function PositionFields({asset}){return <><div className="form-grid"><label>Quantidade atual (opcional)<input name="quantity" type="number" min="0" step="any" defaultValue={asset?.quantity??''}/></label><label>Preço médio em reais (opcional)<input name="averagePrice" type="number" min="0" step="any" defaultValue={asset?.averagePrice??''}/></label><label>Data da compra (opcional)<input name="purchaseDate" type="date" max={dateISO()} defaultValue={asset?.purchaseDate||''}/></label><label>Instituição da posição<input name="institution" maxLength={80} placeholder="Ex.: Santander, corretora ou Tesouro Direto" defaultValue={asset?.institution||''}/></label></div><p className="muted small">A instituição organiza a alocação por local de custódia. Quantidade × preço médio informa o custo da posição; saldos e aportes continuam nos lançamentos.</p></>}
+export function readPosition(f){return {quantity:f.get('quantity')===''?null:Number(f.get('quantity')),averagePrice:f.get('averagePrice')===''?null:Number(f.get('averagePrice')),purchaseDate:f.get('purchaseDate')||'',institution:String(f.get('institution')||'').trim(),owner:''}}
 
 export function WealthGoal({state,calc,portfolioCalc=calc,display}){const target=state.settings.wealthGoal||1000000;return <section className="panel goal-panel spaced"><div><span className="eyebrow">META DE PATRIMÔNIO FAMILIAR</span><h2>{display(calc.total)} <span className="muted small">de {display(target)}</span></h2><p className="muted small">Capital familiar acumulado: {display(calc.netInvested)} · Aportes na carteira: {display(portfolioCalc.deposits)}</p></div><div><strong>{Math.min(100,calc.total/target*100).toLocaleString('pt-BR',{maximumFractionDigits:2})}%</strong><progress aria-label="Progresso da meta patrimonial" max={target} value={Math.max(0,calc.total)}/></div></section>}
-export function Rebalance({state,display}){
- const [amount,setAmount]=useState(String(state.settings.monthly)),progress=monthContributionProgress(state),validAmount=amount!==''&&Number.isFinite(Number(amount))&&Number(amount)>=0&&Number(amount)<=1e12;
- const rows=simulateContribution(state,validAmount?Number(amount):0),activeRows=rows.filter(row=>row.target>0||row.value>0);
- return <article className="panel rebalance-panel spaced"><div className="panel-heading"><div><span className="eyebrow">PRÓXIMO APORTE</span><h2>Simule sua distribuição</h2><p>Uma simulação pelos percentuais que você definiu, sem movimentar a carteira.</p></div><Calculator size={23} aria-hidden="true"/></div>
-  <div className="rebalance-inputs"><label>Valor para simular (R$)<input type="number" min="0" max="1000000000000" step="0.01" value={amount} onChange={event=>setAmount(event.target.value)} aria-describedby="rebalance-explanation"/></label><div className="rebalance-presets"><button type="button" className="secondary" onClick={()=>setAmount(String(progress.goal))}><Target size={15}/>Meta mensal <b>{display(progress.goal)}</b></button><button type="button" className="secondary" onClick={()=>setAmount(String(progress.remaining))}>Restante do mês <b>{display(progress.remaining)}</b></button></div></div>
-  <p className="small muted" id="rebalance-explanation">Já aportado neste mês: <strong>{display(progress.deposited)}</strong>. Caixa de dividendos fica fora da distribuição. Os valores simulados priorizam classes abaixo da sua meta.</p>
-  {!validAmount&&<p role="status" className="negative small">Informe um valor válido para simular.</p>}
-  <div className="rebalance-rows">{activeRows.map(row=><div className="rebalance-row" key={row.key} style={{'--asset-color':COLORS[row.key]}}><div className="rebalance-class"><i/><strong>{CATEGORIES[row.key]}</strong><span>Meta {row.target}%</span></div><div className="rebalance-progress"><div className="rebalance-track" role="img" aria-label={`Atual ${row.current.toFixed(1)}%, após simulação ${row.after.toFixed(1)}%, meta ${row.target}%`}><i style={{width:`${Math.min(100,row.current)}%`}}/><b style={{left:`${Math.min(100,row.target)}%`}}/></div><span>Atual {row.current.toLocaleString('pt-BR',{maximumFractionDigits:1})}% <span aria-hidden="true">→</span> Depois {row.after.toLocaleString('pt-BR',{maximumFractionDigits:1})}%</span></div><div className="rebalance-amount"><small>Aporte simulado</small><strong>{display(row.suggested)}</strong></div></div>)}</div>
-  <div className="rebalance-total"><span>Total distribuído</span><strong>{display(rows.reduce((sum,row)=>sum+row.suggested,0))}</strong></div>
+
+export function Rebalance({state,display,onContribute}){
+ const month=dateISO().slice(0,7);
+ const investedThisMonth=state.events.filter(e=>e.kind==='aporte'&&e.date.startsWith(month)).reduce((n,e)=>n+e.amount,0);
+ const remainingMonthly=Math.max(0,(state.settings.monthly||0)-investedThisMonth);
+ const defaultAmount=remainingMonthly>0?remainingMonthly:(state.settings.monthly||1000);
+ const [amountInput,setAmountInput]=useState(String(defaultAmount));
+ const sim=simulateSmartContribution(state,Number(amountInput)||0);
+ const gaps=rebalance(state);
+ return <article className="panel table-wrap spaced smart-rebalance">
+  <div className="panel-heading">
+   <div>
+    <h2>Simulador de aporte inteligente por meta</h2>
+    <p className="muted small">Distribui seu novo aporte comprando apenas as classes abaixo da meta percentual, sem sugerir vendas.</p>
+   </div>
+   <Calculator size={20}/>
+  </div>
+  <div className="smart-contribution-controls">
+   <label>Valor do novo aporte (R$)
+    <input aria-label="Valor do novo aporte" type="number" min="0" step="10" value={amountInput} onChange={e=>setAmountInput(e.target.value)}/>
+   </label>
+   <div className="smart-contribution-presets">
+    <button type="button" className="secondary" onClick={()=>setAmountInput(String(state.settings.monthly||1000))}>Meta mensal ({display(state.settings.monthly||0)})</button>
+    {remainingMonthly>0&&remainingMonthly!==state.settings.monthly&&<button type="button" className="secondary" onClick={()=>setAmountInput(String(remainingMonthly))}>Restante do mês ({display(remainingMonthly)})</button>}
+   </div>
+  </div>
+  <table>
+   <thead>
+    <tr>
+     <th>Classe</th>
+     <th>Atual</th>
+     <th>Meta</th>
+     <th>Desvio atual</th>
+     <th>Aporte sugerido</th>
+     <th>Pós-aporte</th>
+     {onContribute&&<th>Ação</th>}
+    </tr>
+   </thead>
+   <tbody>
+    {sim.rows.map((r,idx)=>{
+     const gap=gaps[idx]?.gap??r.gapBefore;
+     const targetAsset=state.assets.find(a=>a.category===r.key&&a.id!=='cash');
+     return <tr key={r.key}>
+      <td><span className="smart-class-cell"><i style={{background:COLORS[r.key]}}/>{CATEGORIES[r.key]}</span></td>
+      <td>{r.current.toFixed(1)}% <small className="muted">({display(r.currentAmount)})</small></td>
+      <td>{r.target}%</td>
+      <td>{gap>0?'Faltam ':gap<0?'Acima em ':''}{display(Math.abs(gap))}</td>
+      <td><strong className={r.suggestedContribution>0?'smart-buy-highlight':''}>{r.suggestedContribution>0?display(r.suggestedContribution):'—'}</strong></td>
+      <td>{r.postContributionPct.toFixed(1)}%</td>
+      {onContribute&&<td>{r.suggestedContribution>0&&<button type="button" className="secondary smart-contribute-btn" onClick={()=>onContribute(r.key,r.suggestedContribution,targetAsset?.id)}><Plus size={14}/>Aportar</button>}</td>}
+     </tr>;
+    })}
+   </tbody>
+  </table>
  </article>;
 }
+

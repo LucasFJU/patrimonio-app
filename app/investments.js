@@ -1,23 +1,119 @@
 'use client';
 
 import {useState} from 'react';
-import {ArrowRight,Landmark,Plus,Search,Wallet} from 'lucide-react';
-import {CATEGORIES,COLORS,moneyWeightedReturn} from '../lib/portfolio.mjs';
+import {ArrowRight,Info,Landmark,Plus,RefreshCw,Search,ShieldCheck} from 'lucide-react';
+import {CATEGORIES,COLORS,money,moneyWeightedReturn} from '../lib/portfolio.mjs';
 import {allocationByInstitution,investmentPositions} from '../lib/investment-view.mjs';
 
 const fmtDate=value=>new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
-const fmtPercent=value=>`${value.toLocaleString('pt-BR',{maximumFractionDigits:1})}%`;
+const INST_COLORS=['#eef880','#b2d1ce','#c4b5d6','#7dd3fc','#4ade80','#f472b6'];
 
-export function Investments({state,calc,display,onRegister,onAdd,onClose,onEdit}){
- const [search,setSearch]=useState(''),[institution,setInstitution]=useState('all');
+export function Investments({state,calc,display,onAdd,onClose,onEdit}){
+ const [search,setSearch]=useState(''),[institution,setInstitution]=useState('all'),[categoryFilter,setCategoryFilter]=useState('all');
  const positions=investmentPositions(state),allocation=allocationByInstitution(positions),total=positions.reduce((sum,p)=>sum+p.value,0),returnData=moneyWeightedReturn(state);
- const classes=Object.entries(positions.reduce((result,position)=>{const key=position.asset.category;result[key]=(result[key]||0)+position.value;return result;},{})).map(([key,value])=>({key,value,label:CATEGORIES[key]||'Outros',color:COLORS[key]||'var(--investment)'})).filter(row=>row.value>0).sort((a,b)=>b.value-a.value);
- const visible=positions.filter(p=>(institution==='all'||p.institution===institution)&&`${p.asset.name} ${p.asset.ticker||''} ${p.institution} ${CATEGORIES[p.asset.category]}`.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')));
+ const visible=positions.filter(p=>(institution==='all'||p.institution===institution)&&(categoryFilter==='all'||p.asset.category===categoryFilter)&&`${p.asset.name} ${p.asset.ticker||''} ${p.institution} ${CATEGORIES[p.asset.category]}`.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')));
  return <div className="investments-page">
-  <section className="panel investment-summary" aria-labelledby="investment-total-heading"><div className="investment-summary-main"><span className="eyebrow">CARTEIRA CONJUNTA · PATRIMÔNIO INVESTIDO</span><h2 id="investment-total-heading">Valor da carteira</h2><strong>{display(calc.total)}</strong><p>Posições de investimento e caixa de dividendos. Saldos bancários aparecem em Finanças.</p><div className="investment-summary-actions"><button className="primary" type="button" onClick={onRegister}><Plus size={17}/>Registrar aporte</button><button className="secondary" type="button" onClick={onAdd}>Adicionar ativo</button><button className="secondary" type="button" onClick={onClose}>Atualizar saldos</button></div></div><div className="investment-summary-numbers"><div className="investment-result"><span>Resultado acumulado</span><b className={calc.gain<0?'negative':''}>{display(calc.gain)}</b><small>Patrimônio menos capital líquido aportado</small></div><div><span>Capital líquido aportado</span><b>{display(calc.netInvested)}</b></div><div><span>Retorno pessoal</span><b>{returnData?`${(returnData.total*100).toLocaleString('pt-BR',{maximumFractionDigits:2})}%`:'—'}</b><small>{returnData?'Considera as datas dos movimentos':'Histórico insuficiente'}</small></div></div></section>
-  <section className="panel investment-classes" aria-labelledby="investment-classes-heading"><div className="panel-heading"><div><span className="eyebrow">COMPOSIÇÃO DA CARTEIRA</span><h2 id="investment-classes-heading">Onde o patrimônio está aplicado</h2><p>Distribuição pelos saldos registrados, sem incluir o caixa bancário.</p></div><Wallet size={20} aria-hidden="true"/></div>{classes.length?<><div className="investment-class-track" role="img" aria-label={classes.map(row=>`${row.label}: ${fmtPercent(total?row.value/total*100:0)}`).join(', ')}>{classes.map(row=><span key={row.key} style={{width:`${total?row.value/total*100:0}%`,background:row.color}}/>)}</div><div className="investment-class-list">{classes.map(row=><div className="investment-class-item" key={row.key}><i style={{background:row.color}}/><span>{row.label}</span><strong>{display(row.value)}</strong><small>{fmtPercent(total?row.value/total*100:0)}</small></div>)}</div></>:<div className="investment-empty"><p>Adicione um ativo para visualizar a distribuição da carteira.</p><button className="secondary" type="button" onClick={onAdd}><Plus size={16}/>Adicionar ativo</button></div>}{calc.values.cash>0&&<p className="investment-cash"><Wallet size={15} aria-hidden="true"/>Caixa de dividendos disponível: <strong>{display(calc.values.cash)}</strong></p>}</section>
-  <section className="panel investment-institutions"><div className="panel-heading"><div><h2>Alocação por instituição</h2><p>Conforme a instituição informada em cada posição. Caixa de dividendos separado.</p></div><Landmark size={18}/></div>{allocation.length?<><div className="investment-allocation-track" role="img" aria-label="Distribuição por instituição">{allocation.map((row,index)=><i key={row.institution} style={{width:`${total?row.value/total*100:0}%`,background:['var(--lime)','#b5d5d1','#aa9eb8','#7c7a7f'][index%4]}}/>)}</div><div className="investment-institution-list">{allocation.map((row,index)=><button key={row.institution} aria-pressed={institution===row.institution} className={institution===row.institution?'selected':''} onClick={()=>setInstitution(institution===row.institution?'all':row.institution)}><i style={{background:['var(--lime)','#b5d5d1','#aa9eb8','#7c7a7f'][index%4]}}/><span>{row.institution}</span><strong>{display(row.value)}</strong><small>{total?(row.value/total*100).toLocaleString('pt-BR',{maximumFractionDigits:1}):'0'}%</small></button>)}</div></>:<p className="muted">Adicione posições para ver a distribuição.</p>}{calc.values.cash>0&&<p className="muted small">Caixa de dividendos: {display(calc.values.cash)}</p>}</section>
-  <section className="panel investment-position-panel"><div className="panel-heading"><div><h2>Posições</h2><p>Confira quando e de onde veio o último saldo registrado.</p></div><span className="tag neutral">{visible.length} de {positions.length}</span></div><div className="investment-toolbar"><div className="search"><Search size={17}/><input aria-label="Buscar investimento" placeholder="Buscar nome, classe ou instituição…" value={search} onChange={event=>setSearch(event.target.value)}/></div><select aria-label="Filtrar instituição" value={institution} onChange={event=>setInstitution(event.target.value)}><option value="all">Todas as instituições</option>{allocation.map(row=><option key={row.institution}>{row.institution}</option>)}</select></div>{visible.length?<div className="investment-position-grid">{visible.map(position=>{const asset=position.asset;const participation=calc.total>0?position.value/calc.total*100:0;return <article className="investment-position" key={asset.id} style={{'--asset-color':COLORS[asset.category]}}><div className="investment-position-top"><span className="investment-position-icon" style={{color:COLORS[asset.category]}}><Landmark size={19}/></span><div><h3>{asset.name}</h3><span>{CATEGORIES[asset.category]}{asset.ticker?` · ${asset.ticker}`:''}</span></div><button className="text-button" aria-label={`Editar ${asset.name}`} onClick={()=>onEdit(asset)}>Editar <ArrowRight size={14}/></button></div><div className="investment-position-balance"><strong className="investment-position-value">{display(position.value)}</strong><span className="investment-participation">{participation.toLocaleString('pt-BR',{maximumFractionDigits:1})}% da carteira</span></div><div className="investment-weight" role="progressbar" aria-label={`Participação de ${asset.name} na carteira`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(participation*10)/10}><i style={{width:`${Math.min(100,participation)}%`}}/></div><div className="investment-position-meta"><span>Instituição</span><b>{position.institution}</b><span>Origem do saldo</span><b>{position.source}</b><span>Data do saldo</span><b>{position.balanceDate?fmtDate(position.balanceDate):'Sem conferência registrada'}</b>{position.linked&&<><span>Conexão</span><b>{position.remoteDate?`Meu Pluggy · ${fmtDate(position.remoteDate)}`:'Meu Pluggy · sem data'}</b></>}</div>{asset.reserve&&<span className="tag green">Reserva</span>}</article>})}</div>:<p className="muted">Nenhuma posição corresponde à busca ou ao filtro.</p>}</section>
-  <details className="panel investment-return-note"><summary>Como o resultado e a rentabilidade são calculados</summary><p>Resultado acumulado = patrimônio atual − saldo inicial − aportes + retiradas. Os dividendos que continuam na carteira já fazem parte do patrimônio e não são somados outra vez. Transferências internas e reinvestimentos não são novos aportes.</p><p>O retorno pessoal considera as datas dos aportes e retiradas. Ele depende de saldos informados ou sincronizados: uma posição sem conferência recente pode mostrar patrimônio e retorno desatualizados. Preço médio e quantidade são informativos; não substituem o saldo registrado.</p></details>
+  <section className="panel investment-summary">
+   <div className="investment-summary-main">
+    <span className="eyebrow">CARTEIRA CONJUNTA · CUSTÓDIA CONSOLIDADA</span>
+    <h2>Patrimônio investido</h2>
+    <strong>{display(calc.total)}</strong>
+    <p>Saldo consolidado das posições e do caixa de dividendos. Contas correntes bancárias ficam separadas no Controle financeiro.</p>
+    <div className="investment-summary-actions">
+     <button className="primary" onClick={onAdd}><Plus size={16}/>Adicionar ativo</button>
+     <button className="secondary" onClick={onClose}><RefreshCw size={15}/>Atualizar saldos</button>
+    </div>
+   </div>
+   <div className="investment-summary-numbers">
+    <div><span>Capital líquido aportado</span><b>{display(calc.netInvested)}</b></div>
+    <div><span>Resultado acumulado</span><b className={calc.gain<0?'negative':'positive-text'}>{calc.gain>0?'+':''}{display(calc.gain)}</b></div>
+    <div><span>Retorno pessoal (TIR)</span><b className={returnData&&returnData.total<0?'negative':'positive-text'}>{returnData?`${(returnData.total*100).toLocaleString('pt-BR',{maximumFractionDigits:2})}%`:'Histórico insuficiente'}</b></div>
+    <div><span>Reserva de liquidez</span><b>{display(calc.reserve)}</b></div>
+   </div>
+  </section>
+
+  <section className="panel investment-institutions">
+   <div className="panel-heading">
+    <div>
+     <h2>Alocação por instituição de custódia</h2>
+     <p>Toque em uma instituição para filtrar suas posições abaixo. Caixa de dividendos separado.</p>
+    </div>
+    <Landmark size={18}/>
+   </div>
+   {allocation.length?<>
+    <div className="investment-allocation-track" role="img" aria-label="Distribuição por instituição">
+     {allocation.map((row,index)=><i key={row.institution} style={{width:`${total?row.value/total*100:0}%`,background:INST_COLORS[index%INST_COLORS.length]}} title={`${row.institution}: ${display(row.value)}`}/>)}
+    </div>
+    <div className="investment-institution-list">
+     {allocation.map((row,index)=><button key={row.institution} className={institution===row.institution?'selected':''} onClick={()=>setInstitution(institution===row.institution?'all':row.institution)}>
+      <i style={{background:INST_COLORS[index%INST_COLORS.length]}}/>
+      <span>{row.institution}</span>
+      <strong>{display(row.value)}</strong>
+      <small>{total?(row.value/total*100).toLocaleString('pt-BR',{maximumFractionDigits:1}):'0'}% da carteira</small>
+     </button>)}
+    </div>
+   </>:<p className="muted">Adicione posições para ver a distribuição por corretora ou banco.</p>}
+   {calc.values.cash>0&&<p className="muted small" style={{marginTop:12}}>Caixa de dividendos disponível para reinvestir: <b>{display(calc.values.cash)}</b></p>}
+  </section>
+
+  <section className="panel investment-position-panel">
+   <div className="panel-heading">
+    <div>
+     <h2>Posições da carteira</h2>
+     <p>Confira participação percentual, custo médio e data da última conferência de cada ativo.</p>
+    </div>
+    <span className="tag neutral">{visible.length} de {positions.length} posições</span>
+   </div>
+   <div className="investment-toolbar">
+    <div className="search">
+     <Search size={17}/>
+     <input aria-label="Buscar investimento" placeholder="Buscar por nome, ticker, classe ou instituição…" value={search} onChange={event=>setSearch(event.target.value)}/>
+    </div>
+    <select aria-label="Filtrar classe" value={categoryFilter} onChange={event=>setCategoryFilter(event.target.value)}>
+     <option value="all">Todas as classes</option>
+     {Object.entries(CATEGORIES).filter(([k])=>k!=='caixa').map(([k,label])=><option key={k} value={k}>{label}</option>)}
+    </select>
+    <select aria-label="Filtrar instituição" value={institution} onChange={event=>setInstitution(event.target.value)}>
+     <option value="all">Todas as instituições</option>
+     {allocation.map(row=><option key={row.institution}>{row.institution}</option>)}
+    </select>
+   </div>
+   {visible.length?<div className="investment-position-grid">
+    {visible.map(position=>{
+     const asset=position.asset;
+     const sharePct=calc.total>0?(position.value/calc.total*100):0;
+     const classColor=COLORS[asset.category]||'#10b981';
+     return <article className="investment-position" key={asset.id} style={{'--asset-accent':classColor}}>
+      <div className="investment-position-top">
+       <span className="investment-position-icon" style={{background:`color-mix(in srgb, ${classColor} 14%, var(--panel))`,color:classColor}}><Landmark size={18}/></span>
+       <div>
+        <h3>{asset.name}</h3>
+        <span>{CATEGORIES[asset.category]}{asset.ticker?` · ${asset.ticker}`:''}</span>
+       </div>
+       <button className="text-button" aria-label={`Editar ${asset.name}`} onClick={()=>onEdit(asset)}>Editar <ArrowRight size={14}/></button>
+      </div>
+      <div className="investment-position-value-row">
+       <strong className="investment-position-value">{display(position.value)}</strong>
+       <span className="position-share-badge">{sharePct.toLocaleString('pt-BR',{maximumFractionDigits:1})}% da carteira</span>
+      </div>
+      <div className="custom-progress-track" style={{marginBottom:14}}><i style={{width:`${Math.min(100,sharePct)}%`,background:classColor}}/></div>
+      <div className="investment-position-meta">
+       <span>Instituição</span><b>{position.institution}</b>
+       {asset.quantity!=null&&asset.averagePrice!=null&&<><span>Posição & PM</span><b>{asset.quantity} cotas · PM {money(asset.averagePrice)}</b></>}
+       <span>Origem do saldo</span><b>{position.source}</b>
+       <span>Última conferência</span><b>{position.balanceDate?fmtDate(position.balanceDate):'Sem conferência registrada'}</b>
+       {position.linked&&<><span>Conexão Open Finance</span><b>{position.remoteDate?`Meu Pluggy · ${fmtDate(position.remoteDate)}`:'Meu Pluggy · sem data'}</b></>}
+      </div>
+      {asset.reserve&&<span className="tag green"><ShieldCheck size={13}/> Reserva de emergência</span>}
+     </article>;
+    })}
+   </div>:<p className="muted">Nenhuma posição corresponde à busca ou ao filtro selecionado.</p>}
+  </section>
+
+  <details className="panel investment-return-note">
+   <summary>Como o resultado e a rentabilidade são calculados</summary>
+   <p>Resultado acumulado = patrimônio atual − saldo inicial − aportes + retiradas. Os dividendos que continuam na carteira já fazem parte do patrimônio e não são somados outra vez. Transferências internas e reinvestimentos não são novos aportes.</p>
+   <p>O retorno pessoal considera as datas dos aportes e retiradas. Ele depende de saldos informados ou sincronizados: uma posição sem conferência recente pode mostrar patrimônio e retorno desatualizados. Preço médio e quantidade são informativos; não substituem o saldo registrado.</p>
+  </details>
  </div>;
 }

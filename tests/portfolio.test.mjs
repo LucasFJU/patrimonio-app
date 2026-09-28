@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initialState,validateState,calculate,dateISO,monthlyHistory,suggestedPlan,projection,ASSET_PRESETS,CATEGORIES} from '../lib/portfolio.mjs';
+import {initialState,validateState,calculate,dateISO,monthlyHistory,suggestedPlan,projection,ASSET_PRESETS,CATEGORIES,simulateSmartContribution,dividendAnalytics} from '../lib/portfolio.mjs';
 const state=()=>initialState();
 function add(s,kind,amount,assetId='cdb-santander',more={}){s.events.push({id:String(s.events.length+1),date:dateISO(),createdAt:String(s.events.length).padStart(3,'0'),kind,amount,assetId,...more});return s;}
 test('aporte não é lucro; provento e reinvestimento não duplicam capital',()=>{const s=state();add(s,'aporte',800);assert.equal(calculate(s).gain,0);add(s,'dividendo',100);assert.equal(calculate(s).gain,100);add(s,'reinvestimento',100);const c=calculate(validateState(s));assert.equal(c.total,6600);assert.equal(c.deposits,800);assert.equal(c.reinvested,100);assert.equal(c.values.cash,0);assert.equal(c.gain,100);});
@@ -30,3 +30,26 @@ test('validação recusa datas impossíveis, futuros, NaN, campos hostis e IDs d
 test('planos destinam exatamente o aporte e respeitam perfil/prazo',()=>{for(const initial of [5700,10000,50000])for(const risk of ['conservador','moderado','arrojado'])for(const monthly of [800,1000]){const s=state();s.assets[0].initial=initial;s.assets[0].reserve=true;s.settings.risk=risk;s.settings.monthly=monthly;const p=suggestedPlan(s);assert.equal(Object.values(p.values).reduce((a,b)=>a+b),monthly);if(risk==='conservador')assert.equal(p.values.acoes,0);}const s=state();s.assets[0].initial=50000;s.assets[0].reserve=true;s.settings.horizon=2;assert.equal(suggestedPlan(s).values.acoes,0);});
 test('projeção sem juros e com perdas',()=>{assert.equal(projection(5700,800,10,0),101700);assert.ok(projection(5700,800,10,-5)<101700);});
 test('atalhos para novos investimentos usam classes existentes sem criar posições artificiais',()=>{assert.ok(ASSET_PRESETS.some(p=>p.name==='Tesouro Selic'&&p.category==='tesouro'));assert.ok(ASSET_PRESETS.some(p=>p.name==='LCI'&&p.category==='cdb'));assert.ok(ASSET_PRESETS.some(p=>p.name==='Fundo imobiliário (FII)'&&p.category==='fiis'));assert.ok(ASSET_PRESETS.every(p=>Object.hasOwn(CATEGORIES,p.category)));assert.equal(initialState().assets.length,2);});
+test('simulador de aporte inteligente por meta compra apenas classes abaixo da meta sem sugerir vendas',()=>{
+ const s=state();
+ const sim=simulateSmartContribution(s,1000);
+ assert.equal(sim.amount,1000);
+ const totalSuggested=sim.rows.reduce((sum,r)=>sum+r.suggestedContribution,0);
+ assert.ok(Math.abs(totalSuggested-1000)<0.05);
+ const cdbRow=sim.rows.find(r=>r.key==='cdb');
+ assert.equal(cdbRow.suggestedContribution,0);
+ assert.ok(sim.rows.filter(r=>r.key!=='cdb'&&r.target>0).every(r=>r.suggestedContribution>0));
+});
+test('análise avançada de dividendos calcula Yield on Cost (YoC) 12m, média mensal e série mensal',()=>{
+ const s=state();
+ add(s,'dividendo',57,'cdb-santander');
+ const d=dividendAnalytics(s);
+ assert.equal(d.totalAllTime,57);
+ assert.equal(d.last12MonthsTotal,57);
+ assert.equal(d.monthlySeries.length,12);
+ const cdb=d.byAsset.find(a=>a.assetId==='cdb-santander');
+ assert.ok(cdb);
+ assert.equal(cdb.costBasis,5700);
+ assert.ok(Math.abs(cdb.yoc12m-1)<0.001);
+});
+

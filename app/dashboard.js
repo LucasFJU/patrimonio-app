@@ -1,39 +1,344 @@
 'use client';
-
-import {ArrowRight,CalendarDays,CheckCircle2,Info,Target,Wallet,AlertTriangle,ArrowDownLeft,ArrowUpRight,TrendingUp,Activity,Landmark} from 'lucide-react';
-import {CATEGORIES,COLORS,dateISO} from '../lib/portfolio.mjs';
+import {useMemo} from 'react';
+import {AlertTriangle,ArrowRight,ArrowUpRight,CalendarDays,Coins,CreditCard,Landmark,ReceiptText,ShieldCheck,Sparkles,Target,TrendingUp,Wallet} from 'lucide-react';
+import {ALLOCATION_KEYS,CATEGORIES,COLORS,dateISO,dividendAnalytics,periodStartDate,moneyWeightedReturn} from '../lib/portfolio.mjs';
 import {DEFAULT_FINANCE,summarizeFinance,upcomingFinanceObligations} from '../lib/finance.mjs';
 import {confirmedFinanceInsights} from '../lib/insights.mjs';
 
-const percent=value=>`${value.toLocaleString('pt-BR',{maximumFractionDigits:1})}%`;
-const shortDate=value=>new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
+const fmtDate=d=>new Date(`${d}T12:00:00`).toLocaleDateString('pt-BR');
+const fmtMonth=m=>{const v=new Date(`${m}-15T12:00:00`).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});return v.charAt(0).toLocaleUpperCase('pt-BR')+v.slice(1);};
 
 export function DashboardHome({state,calc,history,settings,personalReturn,period,onPeriod,display,hidden,Evolution,onNavigate,onClose}){
- const today=dateISO(),month=today.slice(0,7),finance=state.finance||DEFAULT_FINANCE(),summary=summarizeFinance(finance,month,today,state.events),obligations=upcomingFinanceObligations(finance,today,45),pending=finance.transactions.filter(t=>t.needsReview).length+(finance.pluggy?.review||[]).filter(r=>r.needsReview).length,insights=confirmedFinanceInsights(finance,today);
- const latestBalance=state.events.filter(e=>e.kind==='saldo').map(e=>e.date).sort().at(-1),balanceAge=latestBalance?Math.round((Date.parse(today)-Date.parse(latestBalance))/86400000):null;
- const investedThisMonth=state.events.filter(e=>e.kind==='aporte'&&e.date.startsWith(month)).reduce((n,e)=>n+e.amount,0),monthlyGap=Math.max(0,settings.monthly-investedThisMonth),wealthGoal=settings.wealthGoal||1000000,reserveGoal=settings.expenses*settings.reserveMonths;
- const categories=Object.entries(calc.byCategory||{}).filter(([,value])=>value>0).sort((a,b)=>b[1]-a[1]);
- const topAssets=state.assets.filter(a=>a.id!=='cash').map(a=>({...a,value:calc.values[a.id]||0})).filter(a=>a.value>0).sort((a,b)=>b.value-a.value).slice(0,3);
- const attention=[
-  pending>0&&{id:'review',title:`${pending} movimentação${pending===1?'':'ões'} para revisar`,detail:'Confirme categorias, duplicados e aportes sincronizados.',tab:'finance'},
-  obligations.length>0&&{id:'due',title:`Próximo vencimento em ${shortDate(obligations[0].date)}`,detail:`${obligations[0].label} · ${display(obligations[0].amount)}`,tab:'finance'},
-  balanceAge>45&&{id:'balance',title:'Atualize os saldos da carteira',detail:`Última conferência em ${shortDate(latestBalance)}.`,action:onClose},
-  monthlyGap>0&&{id:'contribution',title:'Aporte mensal ainda não concluído',detail:`Faltam ${display(monthlyGap)} para a meta deste mês.`,tab:'plan'}
- ].filter(Boolean).slice(0,4);
- const visibleHistory=period==='all'?history:history.slice(-Number(period));
- const financeMetrics=[
-  ['income','Recebido',summary.received,'Entradas confirmadas',ArrowDownLeft,'income'],
-  ['expense','Pago',summary.paid,'Saídas da conta',ArrowUpRight,'paid'],
-  ['investment','Aportes à carteira',summary.investments,'Inclui registros sem débito bancário',TrendingUp,'investment'],
-  ['cashflow','Fluxo do mês',summary.netCashFlow,'Entradas − saídas',Activity,'cashflow']
- ];
- return <div className="home-dashboard">
-  <div className="home-lead-grid">
-   <section className="home-hero panel"><div className="home-hero-content"><span className="eyebrow">CARTEIRA CONJUNTA · PATRIMÔNIO INVESTIDO</span><h2>Seu patrimônio</h2><strong className="home-hero-value">{display(calc.total)}</strong><p>{latestBalance?`Saldos conferidos em ${shortDate(latestBalance)}`:`Carteira iniciada em ${shortDate(state.startDate)}`}. O saldo das contas bancárias aparece ao lado.</p><button className="secondary" onClick={()=>onNavigate('portfolio')}>Abrir carteira <ArrowRight size={16}/></button></div><div className="home-hero-results"><div><span>Resultado acumulado</span><strong className={calc.gain<0?'negative':''}>{display(calc.gain)}</strong><small>Após aportes e retiradas</small></div><div><span>Retorno pessoal (TIR)</span><strong>{personalReturn?percent(personalReturn.total*100):'—'}</strong><small>{personalReturn?'Considera as datas dos aportes':'Histórico insuficiente'}</small></div></div></section>
-   <section className="home-month panel" aria-label="Resumo financeiro do mês"><div className="panel-heading"><div><span className="eyebrow">FINANÇAS · {new Date(`${month}-15T12:00:00`).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).toUpperCase()}</span><h2>Seu mês financeiro</h2></div><button className="icon-button" aria-label="Abrir Finanças" onClick={()=>onNavigate('finance')}><ArrowRight size={19}/></button></div><button className="home-month-balance" onClick={()=>onNavigate('finance','accounts',{month})}><span><Landmark size={19}/>Disponível nas contas</span><strong className={summary.cash<0?'negative':''}>{display(summary.cash)}</strong><small>Saldo bancário · separado da carteira</small></button><div className="home-month-grid">{financeMetrics.map(([semantic,label,value,note,Icon,type])=><button key={label} className="home-month-metric" data-semantic={semantic} onClick={()=>onNavigate('finance','transactions',{month,type,status:'confirmed'})}><Icon size={18}/><span>{label}</span><strong className={value<0?'negative':''}>{display(value)}</strong><small>{note}</small></button>)}</div><div className="home-month-foot"><button onClick={()=>onNavigate('finance','transactions',{month,type:'spending',status:'confirmed'})}>Gastos por competência <strong>{display(summary.expenses)}</strong></button><button onClick={()=>onNavigate('finance','accounts',{month})}>Faturas a vencer no mês <strong>{display(summary.due)}</strong></button></div></section>
-  </div>
-  <div className="home-main-grid"><article className="panel home-evolution"><div className="panel-heading"><div><h2>Evolução do patrimônio</h2><p>Valor da carteira × capital investido</p></div><select aria-label="Período do gráfico" value={period} onChange={e=>onPeriod(e.target.value)}><option value="1">1 mês</option><option value="12">12 meses</option><option value="all">Histórico completo</option></select></div><Evolution data={visibleHistory} hidden={hidden}/><p className="muted small"><Info size={14}/> Meses sem saldo atualizado não representam cotação de mercado.</p></article><article className="panel home-attention"><div className="panel-heading"><div><h2>Próximas decisões</h2><p>Pendências e compromissos que pedem sua atenção.</p></div><CalendarDays size={19}/></div>{attention.length?<div className="home-attention-list">{attention.map(item=><button key={item.id} onClick={item.action||(()=>onNavigate(item.tab,item.id==='review'?'review':item.id==='due'?'scheduled':undefined))}><span><strong>{item.title}</strong><small>{item.detail}</small></span><ArrowRight size={17}/></button>)}</div>:<div className="home-clear"><CheckCircle2 size={21}/><span>Sem pendências ou vencimentos próximos cadastrados.</span></div>}{obligations.length>1&&<small className="muted">Mais {obligations.length-1} compromisso(s) nos próximos 45 dias.</small>}</article></div>
-  <div className="home-support-grid"><article className="panel home-goals"><div className="panel-heading"><h2>Metas em andamento</h2><Target size={18}/></div>{[['Patrimônio investido',calc.total,wealthGoal],['Reserva',calc.reserve,reserveGoal],['Aporte do mês',investedThisMonth,settings.monthly]].map(([label,value,target])=><div className="home-goal" key={label}><div><strong>{label}</strong><span>{percent(target>0?Math.min(100,value/target*100):0)}</span></div><progress max={Math.max(target,1)} value={Math.max(0,Math.min(value,target))}/><small>{display(value)} de {display(target)}</small></div>)}<button className="text-button" onClick={()=>onNavigate('plan')}>Ver meu plano <ArrowRight size={15}/></button></article><article className="panel home-allocation"><div className="panel-heading"><h2>Onde está investido</h2><Wallet size={18}/></div>{categories.length?<><div className="home-allocation-track" role="img" aria-label="Distribuição da carteira por classe">{categories.map(([key,value])=><i key={key} style={{width:`${value/calc.total*100}%`,background:COLORS[key]||'var(--mint)'}}/>)}</div>{categories.map(([key,value])=><div className="home-allocation-row" key={key}><span><i style={{background:COLORS[key]||'var(--mint)'}}/>{CATEGORIES[key]||key}</span><strong>{percent(value/calc.total*100)}</strong></div>)}</>:<p className="muted">Registre um investimento para ver a alocação.</p>}<h3>Maiores posições</h3>{topAssets.map(asset=><div className="home-allocation-row" key={asset.id}><span>{asset.name}</span><strong>{display(asset.value)}</strong></div>)}<button className="text-button" onClick={()=>onNavigate('portfolio')}>Detalhar carteira <ArrowRight size={15}/></button></article><article className="panel home-insights"><div className="panel-heading"><div><h2>Alertas do mês</h2><p>Movimentações confirmadas.</p></div><AlertTriangle size={19}/></div>{insights.length?<div className="home-attention-list">{insights.slice(0,4).map(item=><button key={item.id} onClick={()=>onNavigate('finance')}><span><strong>{item.title}</strong><small>{item.detail}</small></span><ArrowRight size={17}/></button>)}</div>:<div className="home-clear"><CheckCircle2 size={20}/><span>Sem alertas de orçamento ou aumento relevante de gastos.</span></div>}<button className="text-button" onClick={()=>onNavigate('finance')}>Revisar lançamentos <ArrowRight size={15}/></button></article></div>
-  <section className="home-secondary"><button className="secondary" onClick={()=>onNavigate('dividends')}>Dividendos <ArrowRight size={15}/></button><button className="secondary" onClick={()=>onNavigate('analysis')}>Análise do mês <ArrowRight size={15}/></button><button className="secondary" onClick={()=>onNavigate('history')}>Evolução mensal <ArrowRight size={15}/></button></section>
+ const today=dateISO(),month=today.slice(0,7);
+ const finance=state.finance||DEFAULT_FINANCE();
+ const finSummary=useMemo(()=>summarizeFinance(finance,month,today),[finance,month,today]);
+ const upcoming=useMemo(()=>upcomingFinanceObligations(finance,today,30),[finance,today]);
+ const insights=useMemo(()=>confirmedFinanceInsights(finance,today),[finance,today]);
+ const divStats=useMemo(()=>dividendAnalytics(state,today),[state,today]);
+
+ const periodReturn=useMemo(()=>{
+  const start=periodStartDate(state,period,today);
+  return moneyWeightedReturn(state,start,today)||personalReturn;
+ },[state,period,today,personalReturn]);
+
+ const visibleHistory=useMemo(()=>{
+  if(period==='all')return history;
+  const count=Math.max(2,Number(period)||12);
+  return history.slice(-count);
+ },[history,period]);
+
+ const reserveGoal=(settings?.expenses||0)*(settings?.reserveMonths||6);
+ const reservePct=reserveGoal>0?Math.min(100,(calc.reserve/reserveGoal)*100):0;
+ const wealthGoal=settings?.wealthGoal||1000000;
+ const wealthPct=wealthGoal>0?Math.min(100,(calc.total/wealthGoal)*100):0;
+
+ const investedBase=Math.max(0,calc.total-(calc.byCategory.caixa||0));
+ const openInvoices=finSummary.invoices.filter(i=>i.invoiceMonth===month||i.dueDate.slice(0,7)===month);
+ const openInvoicesTotal=openInvoices.reduce((s,i)=>s+i.open,0);
+
+ const activeAllocations=ALLOCATION_KEYS.map(k=>{
+  const val=calc.byCategory[k]||0;
+  const pct=investedBase>0?(val/investedBase)*100:0;
+  return {key:k,label:CATEGORIES[k],color:COLORS[k],value:val,pct};
+ }).filter(item=>item.pct>0);
+
+ let cumulativePct=0;
+ const donutSegments=activeAllocations.map(item=>{
+  const start=cumulativePct;
+  cumulativePct+=item.pct;
+  return {...item,dasharray:`${Math.max(0,item.pct-0.8)} ${100-Math.max(0,item.pct-0.8)}`,dashoffset:25-start};
+ });
+
+ const topClass=activeAllocations.slice().sort((a,b)=>b.pct-a.pct)[0];
+
+ return <div className="dashboard-home">
+  {/* 1. HERO BALANCE BAR (LouBank / C6 Carbon / Nubank Top Balance) */}
+  <section className="panel lou-hero-balance">
+   <div className="lou-balance-main">
+    <span className="eyebrow">PATRIMÔNIO & LIQUIDEZ CONSOLIDADA · {fmtMonth(month).toUpperCase()}</span>
+    <div className="lou-balance-amount-row">
+     <h2 className="hero-amount">{display(calc.total)}</h2>
+     <span className={`hero-delta-pill ${calc.gain>=0?'is-up':'is-down'}`}>
+      <TrendingUp size={13}/>
+      {calc.gain>=0?'+':''}{display(calc.gain)}
+     </span>
+    </div>
+    <p className="hero-subtitle">
+     Capital aportado: <b>{display(calc.netInvested)}</b> · Saldo em conta corrente: <b>{display(finSummary.cash)}</b>
+    </p>
+   </div>
+   <div className="lou-balance-actions">
+    <button type="button" className="secondary compact-btn" onClick={onClose}>Conferir saldos</button>
+    <button type="button" className="primary compact-btn" onClick={()=>onNavigate('portfolio')}>Investir / Carteira <ArrowUpRight size={15}/></button>
+   </div>
+  </section>
+
+  {/* 2. PASTEL WALLET CARDS CAROUSEL (LouBank Mint, Yellow, Lilac & Carbon Cards) */}
+  <section className="lou-wallet-carousel" aria-label="Cartões de resumo de conta e investimentos">
+   <button type="button" className="lou-wallet-card is-mint" onClick={()=>onNavigate('finance')}>
+    <div className="lou-wallet-top">
+     <span className="lou-wallet-brand">CONTA DIGITAL</span>
+     <Wallet size={18}/>
+    </div>
+    <div className="lou-wallet-mid">
+     <small>Saldo disponível</small>
+     <strong>{display(finSummary.cash)}</strong>
+    </div>
+    <div className="lou-wallet-foot">
+     <span>Projetado: {display(finSummary.projectedCash)}</span>
+     <b>•• {String(finance.accounts.length||1).padStart(2,'0')}</b>
+    </div>
+   </button>
+
+   <button type="button" className="lou-wallet-card is-yellow" onClick={()=>onNavigate('portfolio')}>
+    <div className="lou-wallet-top">
+     <span className="lou-wallet-brand">CORRETORA</span>
+     <TrendingUp size={18}/>
+    </div>
+    <div className="lou-wallet-mid">
+     <small>Carteira investida</small>
+     <strong>{display(investedBase)}</strong>
+    </div>
+    <div className="lou-wallet-foot">
+     <span>Lucro: {calc.gain>=0?'+':''}{display(calc.gain)}</span>
+     <b>{donutSegments.length} {donutSegments.length===1?'classe':'classes'}</b>
+    </div>
+   </button>
+
+   <button type="button" className="lou-wallet-card is-lilac" onClick={()=>onNavigate('finance')}>
+    <div className="lou-wallet-top">
+     <span className="lou-wallet-brand">CARTÕES</span>
+     <CreditCard size={18}/>
+    </div>
+    <div className="lou-wallet-mid">
+     <small>Faturas em aberto</small>
+     <strong>{display(openInvoicesTotal)}</strong>
+    </div>
+    <div className="lou-wallet-foot">
+     <span>Gastos mês: {display(finSummary.expenses)}</span>
+     <b>{openInvoices.length} {openInvoices.length===1?'cartão':'cartões'}</b>
+    </div>
+   </button>
+
+   <button type="button" className="lou-wallet-card is-carbon" onClick={()=>onNavigate('dividends')}>
+    <div className="lou-wallet-top">
+     <span className="lou-wallet-brand">PROVENTOS 12M</span>
+     <Coins size={18}/>
+    </div>
+    <div className="lou-wallet-mid">
+     <small>Renda passiva acumulada</small>
+     <strong>{display(divStats.last12MonthsTotal)}</strong>
+    </div>
+    <div className="lou-wallet-foot">
+     <span>Média: {display(divStats.monthlyAverage12m)}/mês</span>
+     <b>YoC {divStats.portfolioYoC.toFixed(1)}%</b>
+    </div>
+   </button>
+  </section>
+
+  {/* 3. SUPER-APP QUICK ACTION TILES (LouBank FINANCE + C6 / Inter / Nubank Hub) */}
+  <section className="lou-quick-hub" aria-label="Atalhos rápidos do banco e corretora">
+   <button type="button" className="lou-action-tile" onClick={()=>onNavigate('finance')}>
+    <span className="lou-tile-badge is-yellow"><ReceiptText size={17}/></span>
+    <strong>Extrato & Conta</strong>
+    <small>Pix, débitos e entradas</small>
+   </button>
+   <button type="button" className="lou-action-tile" onClick={()=>onNavigate('portfolio')}>
+    <span className="lou-tile-badge is-mint"><Landmark size={17}/></span>
+    <strong>Custódia & Ativos</strong>
+    <small>Renda fixa, ações e FIIs</small>
+   </button>
+   <button type="button" className="lou-action-tile" onClick={()=>onNavigate('finance')}>
+    <span className="lou-tile-badge is-lilac"><CreditCard size={17}/></span>
+    <strong>Meus Cartões</strong>
+    <small>Faturas e limites</small>
+   </button>
+   <button type="button" className="lou-action-tile" onClick={()=>onNavigate('dividends')}>
+    <span className="lou-tile-badge is-yellow"><Coins size={17}/></span>
+    <strong>Meus Proventos</strong>
+    <small>Dividendos e JCP</small>
+   </button>
+   <button type="button" className="lou-action-tile" onClick={()=>onNavigate('plan')}>
+    <span className="lou-tile-badge is-mint"><Target size={17}/></span>
+    <strong>Meu Orçamento</strong>
+    <small>Metas e reserva</small>
+   </button>
+   <button type="button" className="lou-action-tile" onClick={()=>onNavigate('reports')}>
+    <span className="lou-tile-badge is-lilac"><ShieldCheck size={17}/></span>
+    <strong>Análise Financeira</strong>
+    <small>Caixa vs. competência</small>
+   </button>
+  </section>
+
+  {/* 4. SPARK METRICS + IMAGE 5 BENTO ROW (KPI Sparklines + Circular Gauge + Thick Pill Goal) */}
+  <section className="spark-bento-row">
+   {/* Bento A: KPI 3-Column Sparklines (SPARK METRICS Image 6) */}
+   <article className="panel spark-kpi-card">
+    <div className="panel-heading">
+     <div>
+      <span className="eyebrow">INDICADORES DE PERFORMANCE</span>
+      <h2>KPIs do Mês & Carteira</h2>
+     </div>
+    </div>
+    <div className="spark-kpi-columns">
+     <div className="spark-kpi-col">
+      <svg className="spark-wave" viewBox="0 0 80 30" aria-hidden="true">
+       <path d="M4 24 Q 18 8, 32 18 T 60 10 T 76 6" fill="none" stroke="#eef880" strokeWidth="2.2" strokeLinecap="round"/>
+      </svg>
+      <strong className={!periodReturn||periodReturn.total>=0?'positive-text':'negative'}>
+       {periodReturn?`${(periodReturn.total*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`:'0,0%'}
+      </strong>
+      <span>Retorno pessoal (TIR)</span>
+      <small>{periodReturn?`${(periodReturn.annual*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% a.a.`:'Em formação'}</small>
+     </div>
+
+     <div className="spark-kpi-col">
+      <svg className="spark-wave" viewBox="0 0 80 30" aria-hidden="true">
+       <path d="M4 22 Q 22 20, 36 12 T 62 14 T 76 7" fill="none" stroke="#b2d1ce" strokeWidth="2.2" strokeLinecap="round"/>
+      </svg>
+      <strong>{display(finSummary.received)}</strong>
+      <span>Receitas no mês</span>
+      <small>Balanço: {display(finSummary.netCashFlow)}</small>
+     </div>
+
+     <div className="spark-kpi-col">
+      <svg className="spark-wave" viewBox="0 0 80 30" aria-hidden="true">
+       <path d="M4 20 Q 20 10, 40 16 T 64 8 T 76 11" fill="none" stroke="#c4b5d6" strokeWidth="2.2" strokeLinecap="round"/>
+      </svg>
+      <strong>{display(calc.reserve)}</strong>
+      <span>Reserva de liquidez</span>
+      <small>{Math.round(reservePct)}% de {settings.reserveMonths} meses</small>
+     </div>
+    </div>
+   </article>
+
+   {/* Bento B: Sources of Income / Allocation Circular Gauge (SPARK METRICS Image 6) */}
+   <article className="panel spark-sources-card">
+    <div className="panel-heading">
+     <div>
+      <span className="eyebrow">FONTES DE PATRIMÔNIO</span>
+      <h2>Distribuição da custódia</h2>
+     </div>
+     <button type="button" className="text-button" onClick={()=>onNavigate('plan')}>Rebalancear →</button>
+    </div>
+
+    <div className="spark-sources-body">
+     <div className="spark-sources-list">
+      {activeAllocations.length>0?activeAllocations.slice(0,4).map(item=><div className="spark-source-item" key={item.key}>
+       <span className="spark-source-dot" style={{background:item.color}}/>
+       <span className="spark-source-name">{item.label}</span>
+       <strong>{item.pct.toFixed(0)}%</strong>
+      </div>):<p className="muted small">Adicione ativos para ver a distribuição.</p>}
+     </div>
+
+     <div className="spark-gauge-wrap" aria-label="Distribuição da carteira">
+      <svg viewBox="0 0 42 42">
+       <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="var(--soft)" strokeWidth="3.2"/>
+       <circle cx="21" cy="21" r="13.2" fill="transparent" stroke="var(--line)" strokeWidth="0.7" strokeDasharray="1 2.5"/>
+       {donutSegments.map(seg=><circle key={seg.key} cx="21" cy="21" r="15.9155" fill="transparent" stroke={seg.color} strokeWidth="3.4" strokeDasharray={seg.dasharray} strokeDashoffset={seg.dashoffset} strokeLinecap="round"/>)}
+      </svg>
+      <div className="spark-gauge-center">
+       <strong>{topClass?`${topClass.pct.toFixed(0)}%`:'0%'}</strong>
+       <small>{topClass?topClass.label:'Vazio'}</small>
+      </div>
+     </div>
+    </div>
+   </article>
+
+   {/* Bento C: Thick Neon-Yellow Progress Bar Card (Image 5 Monthly Savings + LouBank Mint Banner) */}
+   <article className="panel spark-goal-card">
+    <div className="panel-heading">
+     <div>
+      <span className="eyebrow">PROGRESSO PATRIMONIAL</span>
+      <h2>Meta de independência</h2>
+     </div>
+     <Target size={18}/>
+    </div>
+
+    <div className="thick-goal-numbers">
+     <strong>{display(calc.total)}</strong>
+     <span>{wealthPct.toFixed(0)}%</span>
+    </div>
+
+    <div className="thick-pill-progress" role="progressbar" aria-valuenow={Math.round(wealthPct)} aria-valuemin={0} aria-valuemax={100}>
+     <i style={{width:`${Math.max(8,wealthPct)}%`}}/>
+    </div>
+
+    <div className="row-between muted small">
+     <span>Reserva: {Math.round(reservePct)}% concluída</span>
+     <span>Alvo: <b>{display(wealthGoal)}</b></span>
+    </div>
+
+    <button type="button" className="lou-promo-banner" onClick={()=>onNavigate('plan')}>
+     <span className="lou-promo-icon"><Sparkles size={16}/></span>
+     <span>
+      <strong>Simulador de aporte inteligente!</strong>
+      <small>Descubra onde alocar seu próximo aporte mensal</small>
+     </span>
+     <ArrowRight size={16}/>
+    </button>
+   </article>
+  </section>
+
+  {/* 5. EVOLUÇÃO PATRIMONIAL + MOVIMENTAÇÕES E ALERTAS (SPARK METRICS Operational Metrics) */}
+  <section className="two-cols">
+   <article className="panel">
+    <div className="panel-heading">
+     <div>
+      <span className="eyebrow">HISTÓRICO CONSOLIDADO</span>
+      <h2>Evolução do patrimônio × aportado</h2>
+     </div>
+     <div className="segmented" role="group" aria-label="Período do gráfico">
+      {[['6','6M'],['12','12M'],['all','Tudo']].map(([id,label])=><button key={id} type="button" className={period===id?'selected':''} onClick={()=>onPeriod(id)}>{label}</button>)}
+     </div>
+    </div>
+    <div className="chart-legend">
+     <span><i style={{background:'#eef880'}}/>Patrimônio total</span>
+     <span><i style={{background:'#b2d1ce'}}/>Capital líquido aportado</span>
+    </div>
+    {Evolution&&<Evolution data={visibleHistory} hidden={hidden}/>}
+   </article>
+
+   <article className="panel spark-operations-panel">
+    <div className="panel-heading">
+     <div>
+      <span className="eyebrow">AGENDA & MOVIMENTAÇÕES · 30 DIAS</span>
+      <h2>Próximos vencimentos e alertas</h2>
+     </div>
+     <CalendarDays size={18}/>
+    </div>
+
+    {insights.length>0&&<div className="dashboard-insights-list">
+     {insights.slice(0,2).map(item=><div className={`dashboard-alert-row is-${item.severity}`} key={item.id}>
+      <AlertTriangle size={16}/>
+      <div>
+       <strong>{item.title}</strong>
+       <small>{item.detail}</small>
+      </div>
+      <button type="button" className="text-button" onClick={()=>onNavigate('finance')}>Revisar →</button>
+     </div>)}
+    </div>}
+
+    {upcoming.length>0?<div className="spark-ops-list">
+     {upcoming.slice(0,4).map((item,idx)=><div className="spark-ops-row" key={item.id}>
+      <span className={`lou-circle-badge ${idx%3===0?'is-yellow':idx%3===1?'is-mint':'is-lilac'}`}>
+       {item.kind==='invoice'?<CreditCard size={15}/>:<ReceiptText size={15}/>}
+      </span>
+      <span className="spark-ops-copy">
+       <strong>{item.label}</strong>
+       <small>Vence {fmtDate(item.date)} · {item.kind==='invoice'?'Fatura de cartão':'Programado'}</small>
+      </span>
+      <strong className="spark-ops-amount">{display(item.amount)}</strong>
+     </div>)}
+    </div>:<p className="muted">Nenhum vencimento pendente para os próximos 30 dias.</p>}
+
+    <div className="button-row spaced">
+     <button type="button" className="secondary compact-btn" onClick={()=>onNavigate('finance')}>Abrir extrato e contas</button>
+     <button type="button" className="text-button" onClick={()=>onNavigate('dividends')}>Proventos em caixa: {display(divStats.cashBalance)} →</button>
+    </div>
+   </article>
+  </section>
  </div>;
 }
+
+export {DashboardHome as Dashboard};

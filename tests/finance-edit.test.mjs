@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState,dateISO,validateState} from '../lib/portfolio.mjs';
-import {DEFAULT_FINANCE,monthEnd} from '../lib/finance.mjs';
-import {editFinanceTransaction} from '../lib/finance-edit.mjs';
+import {DEFAULT_FINANCE,monthEnd,invoiceSummaries} from '../lib/finance.mjs';
+import {editFinanceTransaction,editFinanceAccount,editFinanceCard,payFinanceInvoice} from '../lib/finance-edit.mjs';
 
 const base=()=>{const state=initialState(),today=dateISO();state.finance=DEFAULT_FINANCE();state.finance.accounts=[{id:'bank',name:'Santander',type:'checking',openingBalance:1000,openingDate:today}];return state;};
 
@@ -24,3 +24,30 @@ test('edição de aporte bancário manual também corrige o evento da carteira e
  assert.throws(()=>editFinanceTransaction(state,'missing',{date:dateISO(),amount:1,description:'x'}),/não encontrado/i);
  assert.throws(()=>editFinanceTransaction(state,'investment',{date:'2099-01-01',amount:1,description:'x'}),/válidos/i);
 });
+
+test('edição de conta bancária, edição de cartão e pagamento de fatura em 1 clique',()=>{
+ const state=base();
+ const updatedAcc=editFinanceAccount(state,'bank',{name:'Santander Select',type:'checking',openingBalance:2500,openingDate:dateISO()});
+ assert.equal(updatedAcc.finance.accounts[0].name,'Santander Select');
+ assert.equal(updatedAcc.finance.accounts[0].openingBalance,2500);
+ assert.equal(validateState(updatedAcc),updatedAcc);
+
+ updatedAcc.finance.cards=[{id:'visa',name:'Visa',accountId:'bank',closeDay:10,dueDay:20,limit:5000}];
+ const invMonth=dateISO().slice(0,7);
+ updatedAcc.finance.transactions=[{id:'purchase',type:'card_purchase',cardId:'visa',amount:400,date:dateISO(),description:'Mercado',category:'Alimentação',installments:1,closeDay:10,dueDay:20,invoiceMonth:invMonth,installmentParts:[{invoiceMonth:invMonth,amount:400,dueDate:`${invMonth}-20`,installment:1}]}];
+
+ const updatedCard=editFinanceCard(updatedAcc,'visa',{name:'Visa Infinite',accountId:'bank',closeDay:12,dueDay:22});
+ assert.equal(updatedCard.finance.cards[0].name,'Visa Infinite');
+ assert.equal(updatedCard.finance.cards[0].closeDay,12);
+ assert.equal(updatedCard.finance.cards[0].dueDay,22);
+ assert.equal(validateState(updatedCard),updatedCard);
+
+ const openInvs=invoiceSummaries(updatedCard.finance);
+ assert.equal(openInvs.length,1);
+ const paidState=payFinanceInvoice(updatedCard,{cardId:'visa',invoiceMonth:openInvs[0].invoiceMonth,accountId:'bank'});
+ const afterInvs=invoiceSummaries(paidState.finance);
+ assert.equal(afterInvs[0].open,0);
+ assert.equal(afterInvs[0].paid,400);
+ assert.equal(validateState(paidState),paidState);
+});
+

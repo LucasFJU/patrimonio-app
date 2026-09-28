@@ -4,11 +4,7 @@ import {initialState,validateState} from '../lib/portfolio.mjs';
 import {investmentPositions,allocationByInstitution} from '../lib/investment-view.mjs';
 import {financeReport,reportTransactions} from '../lib/reports.mjs';
 import {DEFAULT_FINANCE} from '../lib/finance.mjs';
-
-test('relatório soma aporte manual à carteira sem inventar saída de caixa',()=>{
- const finance=DEFAULT_FINANCE();finance.accounts=[{id:'bank',name:'Conta',type:'checking',openingDate:'2026-01-01',openingBalance:500}];finance.transactions=[{id:'income',type:'income',accountId:'bank',amount:500,date:'2026-09-01',description:'Salário',category:'Salário'}];const events=[{id:'outside',kind:'aporte',assetId:'fund',amount:150,date:'2026-09-05',note:'Aporte fora do app'}];
- const report=financeReport(finance,{period:'month',anchor:'2026-09',events});assert.equal(report.investments,150);assert.equal(report.cashInvestments,0);assert.equal(report.cashResult,500);assert.equal(report.rows[0].hasData,true);assert.equal(reportTransactions(finance,'2026-09',{kind:'investments',events})[0].portfolioOnly,true);
-});
+import {buildMonthlySummaryData,generateSummaryPdf} from '../lib/pdf-summary.mjs';
 
 test('posição mostra a origem e a data do saldo sem confundir instituição com responsável',()=>{
  const state=initialState();state.startDate='2026-01-01';state.assets[0].institution='Santander';state.assets.push({id:'fund',name:'Tesouro Selic',category:'tesouro',reserve:true,initial:1000,institution:'Corretora'});
@@ -48,3 +44,36 @@ test('relatório não cria histórico para meses anteriores à primeira conta',(
  assert.equal(report.rows.find(row=>row.month==='2026-01').hasData,false);
  assert.equal(report.rows.find(row=>row.month==='2026-08').hasData,true);
 });
+
+test('exportação de resumo em PDF consolida patrimônio total e despesas do mês atual',()=>{
+ const state=initialState();
+ state.finance=DEFAULT_FINANCE();
+ state.finance.accounts=[{id:'bank',name:'Conta Corrente',type:'checking',openingDate:'2026-09-01',openingBalance:2300}];
+ state.finance.transactions=[
+  {id:'inc1',type:'income',accountId:'bank',amount:8500,date:'2026-09-05',description:'Salário',category:'Salário'},
+  {id:'exp1',type:'expense',accountId:'bank',amount:1250,date:'2026-09-10',description:'Supermercado',category:'Alimentação'},
+  {id:'exp2',type:'expense',accountId:'bank',amount:450,date:'2026-09-12',description:'Combustível',category:'Transporte'}
+ ];
+ const summary=buildMonthlySummaryData(state,'2026-09-27');
+ assert.equal(summary.investedTotal,5700);
+ assert.equal(summary.cashAccountsTotal,9100);
+ assert.equal(summary.netWorthTotal,14800);
+ assert.equal(summary.monthExpenses,1700);
+ assert.equal(summary.expenseTransactionsCount,2);
+ assert.equal(summary.categoryRows[0].name,'Alimentação');
+ assert.equal(summary.categoryRows[0].count,1);
+ const pdf=generateSummaryPdf(state,{referenceDate:'2026-09-27'});
+ assert.ok(pdf.startsWith('%PDF-1.4'));
+ assert.ok(pdf.includes('Resumo Financeiro e Patrimonial'));
+ assert.ok(pdf.includes('DATA DE REFERENCIA'));
+ assert.ok(pdf.includes('27/09/2026'));
+ assert.ok(pdf.includes('PATRIMONIO TOTAL CONSOLIDADO'));
+ assert.ok(pdf.includes('Tabela de Despesas por Categoria'));
+ assert.ok(pdf.includes('CATEGORIA DE DESPESA'));
+ assert.ok(pdf.includes('TOTAL DE DESPESAS DO MES'));
+ assert.ok(pdf.includes('14.800,00'));
+ assert.ok(pdf.includes('1.700,00'));
+ assert.ok(pdf.trimEnd().endsWith('%%EOF'));
+});
+
+
